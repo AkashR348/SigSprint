@@ -12,6 +12,9 @@ import { goalLine, goalProgress } from '@/lib/dailyGoal';
 import { useToday } from '@/lib/useToday';
 import { colors, fonts, radius, space } from '@/theme/tokens';
 
+const CARD_EDGE = 6;
+const BAR_HEIGHT = 12;
+
 export default function HomeScreen() {
   const router = useRouter();
   const today = useToday();
@@ -103,15 +106,15 @@ const styles = StyleSheet.create({
     gap: space.md,
     backgroundColor: colors.green,
     borderRadius: radius.xl,
-    borderBottomWidth: 6,
+    borderBottomWidth: CARD_EDGE,
     borderBottomColor: colors.greenEdge,
     padding: space.xl,
   },
   goalBody: { flex: 1, gap: space.sm },
   goalKicker: { fontFamily: fonts.extraBold, fontSize: 13, color: colors.onGreenSoft },
   goalLine: { fontFamily: fonts.black, fontSize: 20, color: colors.white },
-  track: { height: 12, borderRadius: radius.pill, backgroundColor: colors.greenEdge, overflow: 'hidden' },
-  fill: { height: 12, borderRadius: radius.pill, backgroundColor: colors.yellow },
+  track: { height: BAR_HEIGHT, borderRadius: radius.pill, backgroundColor: colors.greenEdge, overflow: 'hidden' },
+  fill: { height: BAR_HEIGHT, borderRadius: radius.pill, backgroundColor: colors.yellow },
   row: { flexDirection: 'row', gap: space.md },
   disclaimer: { fontFamily: fonts.bold, fontSize: 12, lineHeight: 18, color: colors.muted, textAlign: 'center' },
 });

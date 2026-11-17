@@ -5,7 +5,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import type { ComponentProps } from 'react';
 import { useEffect } from 'react';
-import { StyleSheet, Text, useWindowDimensions } from 'react-native';
+import { Platform, StyleSheet, Text, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, fonts } from '@/theme/tokens';
@@ -55,12 +55,14 @@ export default function RootLayout() {
             paddingBottom: 12 + insets.bottom,
           },
         }}>
-        {tabs.map((tab) => (
+        {tabs.map((tab, i) => (
           <Tabs.Screen
             key={tab.name}
             name={tab.name}
             options={{
               title: tab.title,
+              // A function label drops the bar's own iOS announcement of the tab's position.
+              tabBarAccessibilityLabel: Platform.OS === 'ios' ? `${tab.title}, tab, ${i + 1} of ${tabs.length}` : undefined,
               tabBarLabel: ({ color }) => (
                 <Text maxFontSizeMultiplier={MAX_LABEL_SCALE} numberOfLines={1} style={[styles.label, { color }]}>
                   {tab.title}
