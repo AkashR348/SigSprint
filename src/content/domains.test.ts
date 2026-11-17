@@ -21,3 +21,17 @@ test('no domains or no questions gives an empty split', () => {
   expect(Object.values(allocateQuestions(10, [])).every((n) => n === 0)).toBe(true);
   expect(Object.values(allocateQuestions(-3, ['medications'])).every((n) => n === 0)).toBe(true);
 });
+
+test('each domain carries its published 2026 weight', () => {
+  expect(Object.fromEntries(domains.map((d) => [d.id, d.weight]))).toEqual({
+    medications: 35,
+    federal: 18.75,
+    safety: 23.75,
+    orderEntry: 22.5,
+  });
+});
+
+test.each([NaN, Infinity, -Infinity])('a total of %p gives an empty split', (total) => {
+  const split = allocateQuestions(total, domains.map((d) => d.id));
+  expect(split).toEqual({ medications: 0, federal: 0, safety: 0, orderEntry: 0 });
+});
