@@ -243,7 +243,7 @@ test('two copies of the same damaged save are added once and neither is offered 
   await AsyncStorage.setItem(older, raw);
   await AsyncStorage.setItem(newer, raw);
   await loadProgress();
-  expect((await findRecovery())?.key).toBe(newer);
+  expect(await findRecovery()).toMatchObject({ key: newer });
   expect(await handleRecovery(newer, true)).toBe(true);
   expect(await stored()).toEqual({ ...freshProgress(), xp: 100, days: { '2026-11-16': 10 }, handledBackups: [newer, older] });
   expect(await findRecovery()).toBeNull();
@@ -271,7 +271,7 @@ test('starting fresh a second time remembers the backups already handled', async
   expect(await startFresh(new Date(2000))).toBe(true);
   expect(await stored()).toEqual({ ...freshProgress(), handledBackups: [first] });
   const second = `${BACKUP_KEY_PREFIX}2000`;
-  expect((await findRecovery())?.key).toBe(second);
+  expect(await findRecovery()).toMatchObject({ key: second });
   expect(await handleRecovery(second, true)).toBe(true);
   expect(await findRecovery()).toBeNull();
   expect((await stored() as { days: unknown }).days).toEqual({ '2026-11-16': 10 });
@@ -292,8 +292,11 @@ test('a backup key whose text has gone is not offered as unreadable', async () =
   expect(await findRecovery()).toBeNull();
 });
 
-test('a failed look for backups offers nothing', async () => {
+test('a failed look for backups is reported as failed, not as none, and works when tried again', async () => {
   await freshAfterDamage(damagedSave);
   jest.mocked(AsyncStorage.getAllKeys).mockRejectedValueOnce(new Error('disk'));
-  expect(await findRecovery()).toBeNull();
+  expect(await findRecovery()).toBe('failed');
+  jest.mocked(AsyncStorage.getItem).mockRejectedValueOnce(new Error('disk'));
+  expect(await findRecovery()).toBe('failed');
+  expect(await findRecovery()).toMatchObject({ key: backupKey });
 });

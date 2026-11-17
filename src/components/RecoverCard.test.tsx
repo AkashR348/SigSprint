@@ -116,3 +116,17 @@ test('an answer does not send it looking through storage again', async () => {
   await waitFor(() => expect(getProgressState()).toMatchObject({ progress: { xp: 10 } }));
   expect(AsyncStorage.getAllKeys).toHaveBeenCalledTimes(1);
 });
+
+test('a look that fails says so and offers to check again, which then finds the backup', async () => {
+  resetProgressStoreForTests();
+  await AsyncStorage.clear();
+  await AsyncStorage.setItem(backupKey, damaged);
+  await loadProgress();
+  jest.mocked(AsyncStorage.getAllKeys).mockRejectedValueOnce(new Error('disk'));
+  await render(<RecoverCard />);
+  expect(await screen.findByText("We couldn't check this phone for old saved data.")).toBeTruthy();
+  expect(screen.queryByRole('button', { name: 'Add to my progress' })).toBeNull();
+  await fireEvent.press(screen.getByRole('button', { name: 'Check again' }));
+  expect(await screen.findByText(found)).toBeTruthy();
+  expect(screen.queryByText("We couldn't check this phone for old saved data.")).toBeNull();
+});

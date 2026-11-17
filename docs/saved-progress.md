@@ -22,6 +22,8 @@ Once the save is ready again, the home screen shows a card for the newest backup
 handled (`RecoverCard`). It says what could be trusted in it: days with a sound answer count, and
 the points if they were a sound number. The daily goal is not recovered.
 
+- If the phone cannot be read while looking for backups, the card says so and offers **Check
+  again**; a look that failed is never shown as "no backup".
 - **Add to my progress** adds those days and points to what is there now, so answers given since
   starting fresh are kept. Points that could not be read add nothing and the card says so.
 - **Don't recover**, or **OK** when nothing was sound, sets the backup aside.

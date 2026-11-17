@@ -137,8 +137,8 @@ async function waitingKeys(handled: readonly string[]): Promise<string[]> {
 
 const stamp = (key: string) => Number(key.slice(BACKUP_KEY_PREFIX.length)) || 0;
 
-/** The newest backup still waiting, or null when there is none or the phone could not be read. */
-export async function findRecovery(): Promise<Recovery | null> {
+/** The newest backup still waiting, null when there is none, or `failed` when the phone could not be read. */
+export async function findRecovery(): Promise<Recovery | 'failed' | null> {
   const current = getProgressState();
   if (current.status !== 'ready') return null;
   try {
@@ -150,7 +150,8 @@ export async function findRecovery(): Promise<Recovery | null> {
     }
     return null;
   } catch {
-    return null;
+    // Not looked is not the same as none found.
+    return 'failed';
   }
 }
 

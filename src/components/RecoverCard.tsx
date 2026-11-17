@@ -4,7 +4,7 @@ import { AccessibilityInfo, Platform, StyleSheet, Text, View } from 'react-nativ
 import { ChunkyButton } from '@/components/ChunkyButton';
 import type { Progress } from '@/lib/progress';
 import { findRecovery, getProgressState, handleRecovery, subscribeProgress, type Recovery } from '@/lib/progressStore';
-import { recoveryFailed, recoveryResult, recoverySummary, recoveryTitle } from '@/lib/recoveryText';
+import { lookFailed, recoveryFailed, recoveryResult, recoverySummary, recoveryTitle } from '@/lib/recoveryText';
 import { colors, fonts, radius, space } from '@/theme/tokens';
 
 // `done` holds the buttons locked until the next look for backups replaces the card.
@@ -17,7 +17,8 @@ export function RecoverCard() {
   const state = useSyncExternalStore(subscribeProgress, getProgressState, getProgressState);
   const ready = state.status === 'ready';
   const handled = state.status === 'ready' ? state.progress.handledBackups : undefined;
-  const [recovery, setRecovery] = useState<Recovery | null>(null);
+  const [look, setLook] = useState<Recovery | 'failed' | null>(null);
+  const [tries, setTries] = useState(0);
   const [step, setStep] = useState<Step | null>(null);
   const [told, setTold] = useState<Result | null>(null);
   const resultLine = useRef<ComponentRef<typeof Text>>(null);
@@ -26,12 +27,19 @@ export function RecoverCard() {
   useEffect(() => {
     let current = true;
     void findRecovery().then((next) => {
-      if (current) setRecovery(next);
+      if (current) setLook(next);
     });
     return () => {
       current = false;
     };
-  }, [ready, handled]);
+  }, [ready, handled, tries]);
+
+  const lookedBadly = look === 'failed';
+  const recovery = look === 'failed' ? null : look;
+
+  useEffect(() => {
+    if (lookedBadly) AccessibilityInfo.announceForAccessibility(lookFailed);
+  }, [lookedBadly]);
 
   const key = recovery?.key ?? null;
   const summary = recovery === null ? null : recoverySummary(recovery.found);
@@ -59,7 +67,7 @@ export function RecoverCard() {
     if (Platform.OS !== 'web' && resultLine.current) AccessibilityInfo.sendAccessibilityEvent(resultLine.current, 'focus');
   }, [resultKey, resultText]);
 
-  if (recovery === null && result === null) return null;
+  if (recovery === null && result === null && !lookedBadly) return null;
 
   const handle = (target: Recovery, recover: boolean) => {
     setStep({ key: target.key, at: 'working' });
@@ -79,6 +87,12 @@ export function RecoverCard() {
         <Text key={result.key} ref={resultLine} style={styles.text}>
           {result.text}
         </Text>
+      )}
+      {lookedBadly && (
+        <>
+          <Text style={styles.text}>{lookFailed}</Text>
+          <ChunkyButton tone="plain" label="Check again" onPress={() => setTries((n) => n + 1)} />
+        </>
       )}
       {recovery !== null && at !== 'done' && (
         <>

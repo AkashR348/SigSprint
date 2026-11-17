@@ -17,6 +17,8 @@ export function recoverySummary(found: Salvage | null): string {
 
 export const recoveryFailed = "That didn't work, and nothing was changed. You can try again.";
 
+export const lookFailed = "We couldn't check this phone for old saved data.";
+
 export const recoveryTitle = 'Old saved data';
 
 /** What to say once a backup is dealt with. `found` false: there was nothing in it to add. */
