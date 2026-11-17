@@ -31,6 +31,13 @@ export function subscribeProgress(listener: () => void): () => void {
   return () => listeners.delete(listener);
 }
 
+// Writes run one at a time, so each starts from the last one saved.
+function enqueue(job: () => Promise<boolean>): Promise<boolean> {
+  const run = queue.then(job);
+  queue = run;
+  return run;
+}
+
 async function read(): Promise<void> {
   let raw: string | null;
   try {
@@ -64,8 +71,7 @@ export function retryProgress(): Promise<void> {
 
 /** Saves a change, then shows it. Refused unless ready, so a damaged save is never overwritten. */
 export function updateProgress(change: (progress: Progress) => Progress | null): Promise<boolean> {
-  // One at a time, so each change starts from the last one saved.
-  const run = queue.then(async () => {
+  return enqueue(async () => {
     // An answer given before the first read finishes waits for it.
     await loadProgress();
     const current = getProgressState();
@@ -82,13 +88,11 @@ export function updateProgress(change: (progress: Progress) => Progress | null):
       return false;
     }
   });
-  queue = run;
-  return run;
 }
 
 /** Replaces a damaged save with a fresh one, after copying it aside. Only call once the person agrees. */
 export function startFresh(now: Date): Promise<boolean> {
-  const run = queue.then(async () => {
+  return enqueue(async () => {
     const current = getProgressState();
     if (current.status !== 'unavailable' || current.reason !== 'damaged') return false;
     try {
@@ -107,8 +111,6 @@ export function startFresh(now: Date): Promise<boolean> {
       return false;
     }
   });
-  queue = run;
-  return run;
 }
 
 /** Test seam: forget what was loaded. */

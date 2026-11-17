@@ -1,16 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { AccessibilityInfo, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ChunkyButton } from '@/components/ChunkyButton';
 import { Mascot } from '@/components/Mascot';
 import { ModeTile } from '@/components/ModeTile';
+import { SaveNotice } from '@/components/SaveNotice';
 import { mockExam } from '@/content/domains';
 import { brand } from '@/lib/brand';
-import { goalLine, goalProgress, startFreshWarning, unavailableNotice } from '@/lib/dailyGoal';
-import { retryProgress, startFresh } from '@/lib/progressStore';
+import { goalLine, goalProgress } from '@/lib/dailyGoal';
 import { useToday } from '@/lib/useToday';
 import { colors, fonts, radius, space } from '@/theme/tokens';
 
@@ -23,15 +22,6 @@ export default function HomeScreen() {
   const progress = today.status === 'ready' ? goalProgress(today.answeredToday, today.dailyGoal) : null;
 
   const line = goalLine(today.status, progress);
-  const notice = today.status === 'unavailable' ? unavailableNotice(today.reason) : null;
-  // Starting fresh takes two taps: ask, then agree.
-  const [confirming, setConfirming] = useState(false);
-  const [freshFailed, setFreshFailed] = useState(false);
-
-  // Nothing reads a notice that appears on its own, so say it.
-  useEffect(() => {
-    if (notice !== null) AccessibilityInfo.announceForAccessibility(notice);
-  }, [notice]);
 
   let cta = 'Start studying';
   if (progress?.done) cta = 'Goal done · keep going';
@@ -84,37 +74,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {today.status === 'unavailable' && notice !== null && (
-          <View style={styles.notice}>
-            <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-              <Ionicons name="warning" size={20} color={colors.yellowOnTint} />
-            </View>
-            <View style={styles.noticeBody}>
-              <Text style={styles.noticeText}>{notice}</Text>
-              {today.reason === 'read' && <ChunkyButton label="Try again" onPress={() => void retryProgress()} />}
-              {today.reason === 'damaged' && !confirming && (
-                <ChunkyButton label="Start fresh" onPress={() => setConfirming(true)} />
-              )}
-              {today.reason === 'damaged' && confirming && (
-                <>
-                  <Text accessibilityLiveRegion="polite" style={styles.noticeText}>
-                    {freshFailed ? "That didn't work, and nothing was changed. You can try again." : startFreshWarning}
-                  </Text>
-                  <ChunkyButton
-                    label="Yes, start fresh"
-                    onPress={() =>
-                      void startFresh(new Date()).then((done) => {
-                        setFreshFailed(!done);
-                        if (done) setConfirming(false);
-                      })
-                    }
-                  />
-                  <ChunkyButton tone="yellow" label="Cancel" onPress={() => { setConfirming(false); setFreshFailed(false); }} />
-                </>
-              )}
-            </View>
-          </View>
-        )}
+        {today.status === 'unavailable' && <SaveNotice reason={today.reason} />}
 
         <ChunkyButton tone="yellow" label={cta} onPress={() => router.push('/study')} />
 
@@ -158,9 +118,6 @@ const styles = StyleSheet.create({
   goalLine: { fontFamily: fonts.black, fontSize: 20, color: colors.white },
   track: { height: BAR_HEIGHT, borderRadius: radius.pill, backgroundColor: colors.greenEdge, overflow: 'hidden' },
   fill: { height: BAR_HEIGHT, borderRadius: radius.pill, backgroundColor: colors.yellow },
-  notice: { flexDirection: 'row', gap: space.md, backgroundColor: colors.yellowTint, borderRadius: radius.lg, padding: space.lg },
-  noticeBody: { flex: 1, gap: space.md },
-  noticeText: { fontFamily: fonts.bold, fontSize: 15, lineHeight: 22, color: colors.yellowOnTint },
   row: { flexDirection: 'row', gap: space.md },
   disclaimer: { fontFamily: fonts.bold, fontSize: 12, lineHeight: 18, color: colors.muted, textAlign: 'center' },
 });

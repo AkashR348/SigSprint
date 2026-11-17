@@ -23,7 +23,7 @@ module.exports = defineConfig([
   storageOnlyInStore,
   // The store, the tests that seed it, and the jest mock are the only places that touch storage.
   {
-    files: ['src/lib/progressStore.ts', 'src/lib/*.test.ts', '__mocks__/**'],
+    files: ['src/lib/progressStore.ts', 'src/**/*.test.ts', 'src/**/*.test.tsx', '__mocks__/**'],
     rules: { 'no-restricted-imports': 'off' },
   },
 ]);

@@ -25,4 +25,6 @@ export function unavailableNotice(reason: 'read' | 'damaged'): string {
 
 // Shown before a damaged save is replaced; the person has to agree to it.
 export const startFreshWarning =
-  'Starting fresh sets your streak, points and daily counts back to zero. A copy of the old data stays on this phone.';
+  'Starting fresh sets your streak, points and daily counts back to zero, and your daily goal back to 20. A copy of the old data stays on this phone.';
+
+export const startFreshFailed = "That didn't work, and nothing was changed. You can try again.";

@@ -36,8 +36,9 @@ this SDK; read it before touching an Expo or React Native API.
    (`no-restricted-imports`) fails any other import of the storage package. No save is a fresh
    install; a failed read or a damaged save is `unavailable`, and an update is refused unless the
    state is `ready`, so a damaged save is never overwritten. A change shows on screen only after it
-   is saved. A damaged save is replaced only by `startFresh`, after the person agrees, and only once
-   a copy of it is on the phone. `progressStore.test.ts` asserts each.
+   is saved. A damaged save is replaced only by `startFresh`, and only once a copy of it is on the
+   phone; `progressStore.test.ts` asserts each. The screen asks before calling it, and waits while
+   it runs; `SaveNotice.test.tsx` asserts that.
 
 ## Layout
 
@@ -45,6 +46,7 @@ this SDK; read it before touching an Expo or React Native API.
 | --- | --- |
 | `src/app` | Expo Router screens. One file per route; `_layout.tsx` holds the tab bar. |
 | `src/components` | Shared UI in the Capsule Pop style. |
+| `docs` | Notes that need more than a rule: one file per subject. |
 | `src/content` | Exam facts: domains, weights, mock exam shape. |
 | `src/lib` | Pure logic and hooks. Logic that can be a pure function is one, with a test beside it. |
 | `src/theme` | Design tokens. |
