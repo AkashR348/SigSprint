@@ -25,7 +25,7 @@ export default function HomeScreen() {
   const line = goalLine(today.status, progress);
   const notice = today.status === 'unavailable' ? unavailableNotice(today.reason) : null;
 
-  // iOS does not read an alert that appears on its own; Android uses the live region below.
+  // Nothing reads a notice that appears on its own, so say it.
   useEffect(() => {
     if (notice !== null) AccessibilityInfo.announceForAccessibility(notice);
   }, [notice]);
@@ -82,8 +82,10 @@ export default function HomeScreen() {
         </View>
 
         {today.status === 'unavailable' && notice !== null && (
-          <View accessibilityRole="alert" style={styles.notice}>
-            <Ionicons name="warning" size={20} color={colors.yellowOnTint} />
+          <View style={styles.notice}>
+            <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+              <Ionicons name="warning" size={20} color={colors.yellowOnTint} />
+            </View>
             <View style={styles.noticeBody}>
               <Text style={styles.noticeText}>{notice}</Text>
               {today.reason === 'read' && <ChunkyButton label="Try again" onPress={() => void retryProgress()} />}
