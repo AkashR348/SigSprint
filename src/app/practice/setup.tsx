@@ -98,7 +98,7 @@ export default function PracticeSetupScreen() {
         <ChunkyButton
           label="Start test"
           disabled={length === 0}
-          onPress={() => router.push({ pathname: '/practice/test', params: toParams(config) })}
+          onPress={() => router.push({ pathname: '/practice/run', params: toParams(config) })}
         />
       </View>
     </SafeAreaView>

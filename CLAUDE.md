@@ -30,6 +30,8 @@ this SDK; read it before touching an Expo or React Native API.
 7. **Every question has one clearly correct answer and a stored source.** A question that cannot be
    confirmed against a primary source (FDA label, DEA rule, the PTCB outline), or where two answers
    could be argued, is dropped. Third-party practice questions are never copied or reworded.
+   `starterQuestions.test.ts` checks that each stores a source on a primary site; only reading the
+   source checks the answer itself. A sum cites the source of the fact it uses.
 8. **Comments are short and say only what the code can't**: an invariant, a unit, a trap, or the
    reason for a surprising choice. One line, two at most. No history; git has it.
 9. **Progress is read and written only through `src/lib/progressStore.ts`**; lint
@@ -44,10 +46,10 @@ this SDK; read it before touching an Expo or React Native API.
 
 | Path | What it is |
 | --- | --- |
-| `src/app` | Expo Router screens. One file per route; `_layout.tsx` holds the tab bar. |
+| `src/app` | Expo Router screens, one file per route. `_layout.tsx` is the root stack and `(tabs)/_layout.tsx` the tab bar; a test runs outside the tabs. No route is named `test.tsx`: jest takes it for a test. |
 | `src/components` | Shared UI in the Capsule Pop style. |
 | `docs` | Notes that need more than a rule: one file per subject. |
-| `src/content` | Exam facts: domains, weights, mock exam shape. |
+| `src/content` | Exam facts: domains, weights, mock exam shape, and the starter questions that ship in the app. |
 | `src/lib` | Pure logic and hooks. Logic that can be a pure function is one, with a test beside it. |
 | `src/theme` | Design tokens. |
 

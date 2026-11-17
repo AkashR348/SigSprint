@@ -79,7 +79,7 @@ export default function HomeScreen() {
         <ChunkyButton tone="yellow" label={cta} onPress={() => router.push('/study')} />
 
         <View style={styles.row}>
-          <ModeTile title="Practice test" detail="Pick topics and length" icon="document-text" iconColor={colors.green} onPress={() => router.push('/study')} />
+          <ModeTile title="Practice test" detail="Pick topics and length" icon="document-text" iconColor={colors.green} onPress={() => router.push('/practice/setup')} />
           <ModeTile title="Flashcards" detail="Top 200 drugs" icon="albums" iconColor={colors.amber} onPress={() => router.push('/study')} />
         </View>
         <View style={styles.row}>
