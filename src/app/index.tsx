@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChunkyButton } from '@/components/ChunkyButton';
 import { Mascot } from '@/components/Mascot';
 import { ModeTile } from '@/components/ModeTile';
+import { RecoverCard } from '@/components/RecoverCard';
 import { SaveNotice } from '@/components/SaveNotice';
 import { mockExam } from '@/content/domains';
 import { brand } from '@/lib/brand';
@@ -75,6 +76,7 @@ export default function HomeScreen() {
         </View>
 
         {today.status === 'unavailable' && <SaveNotice reason={today.reason} />}
+        {today.status === 'ready' && <RecoverCard />}
 
         <ChunkyButton tone="yellow" label={cta} onPress={() => router.push('/study')} />
 

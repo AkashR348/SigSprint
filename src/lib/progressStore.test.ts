@@ -3,6 +3,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { freshProgress, recordAnswer, type Progress } from './progress';
 import {
   BACKUP_KEY_PREFIX,
+  findRecovery,
+  handleRecovery,
   getProgressState,
   loadProgress,
   PROGRESS_KEY,
@@ -165,4 +167,70 @@ test('starting fresh is refused for a sound save or a failed read', async () => 
   jest.clearAllMocks();
   expect(await startFresh(at)).toBe(false);
   expect(AsyncStorage.setItem).not.toHaveBeenCalled();
+});
+
+const damagedSave = JSON.stringify({ version: 1, dailyGoal: 20, xp: -4, days: { '2026-11-16': 12, nope: 3 } });
+
+async function freshAfterDamage(raw: string) {
+  await AsyncStorage.setItem(PROGRESS_KEY, raw);
+  await loadProgress();
+  expect(await startFresh(at)).toBe(true);
+  jest.clearAllMocks();
+}
+
+test('no backup means nothing to recover', async () => {
+  await loadProgress();
+  expect(await findRecovery()).toBeNull();
+  expect(AsyncStorage.getAllKeys).toHaveBeenCalled();
+});
+
+test('after starting fresh, the backup is found with its sound parts', async () => {
+  await freshAfterDamage(damagedSave);
+  expect(await findRecovery()).toEqual({ key: backupKey, found: { days: { '2026-11-16': 12 }, answers: 12, xp: null } });
+  expect(AsyncStorage.getItem).toHaveBeenCalledWith(backupKey);
+});
+
+test('a backup with nothing sound in it is found as such', async () => {
+  await freshAfterDamage('{not json');
+  expect(await findRecovery()).toEqual({ key: backupKey, found: null });
+});
+
+test('recovering adds to answers given since, saves once, and is not offered again', async () => {
+  await freshAfterDamage(damagedSave);
+  expect(await updateProgress((p) => recordAnswer(p, '2026-11-16', 10))).toBe(true);
+  expect(await handleRecovery(backupKey, true)).toBe(true);
+  const merged = { version: 1, dailyGoal: 20, xp: 10, days: { '2026-11-16': 13 }, handledBackups: [backupKey] };
+  expect(AsyncStorage.setItem).toHaveBeenLastCalledWith(PROGRESS_KEY, JSON.stringify(merged));
+  expect(getProgressState()).toEqual({ status: 'ready', progress: merged });
+  expect(await findRecovery()).toBeNull();
+  expect(await handleRecovery(backupKey, true)).toBe(false);
+  expect(await AsyncStorage.getItem(backupKey)).toBe(damagedSave);
+});
+
+test('setting a backup aside changes no numbers and stops the offer', async () => {
+  await freshAfterDamage(damagedSave);
+  expect(await handleRecovery(backupKey, false)).toBe(true);
+  expect(getProgressState()).toEqual({ status: 'ready', progress: { ...freshProgress(), handledBackups: [backupKey] } });
+  expect(await findRecovery()).toBeNull();
+});
+
+test('a recovery that cannot be saved changes nothing and can be tried again', async () => {
+  await freshAfterDamage(damagedSave);
+  jest.mocked(AsyncStorage.setItem).mockRejectedValueOnce(new Error('full'));
+  expect(await handleRecovery(backupKey, true)).toBe(false);
+  expect(getProgressState()).toEqual({ status: 'ready', progress: freshProgress() });
+  expect(await handleRecovery(backupKey, true)).toBe(true);
+});
+
+test('recovery is refused for a key that is not a backup, or before the save is ready', async () => {
+  await freshAfterDamage(damagedSave);
+  expect(await handleRecovery(PROGRESS_KEY, true)).toBe(false);
+  resetProgressStoreForTests();
+  expect(await findRecovery()).toBeNull();
+});
+
+test('a failed look for backups offers nothing', async () => {
+  await freshAfterDamage(damagedSave);
+  jest.mocked(AsyncStorage.getAllKeys).mockRejectedValueOnce(new Error('disk'));
+  expect(await findRecovery()).toBeNull();
 });
