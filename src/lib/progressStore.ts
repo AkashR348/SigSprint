@@ -3,6 +3,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { freshProgress, parseProgress, type Progress } from './progress';
 
 export const PROGRESS_KEY = 'sigsprint.progress.v1';
+// A damaged save is copied here, with the time appended, before a fresh one replaces it.
+export const BACKUP_KEY_PREFIX = 'sigsprint.progress.backup.';
 
 // `read`: the phone could not be read, so trying again may work. `damaged`: it was read and is unsound.
 export type ProgressState =
@@ -75,6 +77,31 @@ export function updateProgress(change: (progress: Progress) => Progress | null):
       await AsyncStorage.setItem(PROGRESS_KEY, JSON.stringify(next));
       // Shown only once saved, so the screen never runs ahead of the phone.
       set({ status: 'ready', progress: next });
+      return true;
+    } catch {
+      return false;
+    }
+  });
+  queue = run;
+  return run;
+}
+
+/** Replaces a damaged save with a fresh one, after copying it aside. Only call once the person agrees. */
+export function startFresh(now: Date): Promise<boolean> {
+  const run = queue.then(async () => {
+    const current = getProgressState();
+    if (current.status !== 'unavailable' || current.reason !== 'damaged') return false;
+    try {
+      const raw = await AsyncStorage.getItem(PROGRESS_KEY);
+      // The copy must be on the phone before the damaged save is replaced.
+      if (raw !== null) {
+        const backupKey = `${BACKUP_KEY_PREFIX}${now.getTime()}`;
+        await AsyncStorage.setItem(backupKey, raw);
+        if ((await AsyncStorage.getItem(backupKey)) !== raw) return false;
+      }
+      const fresh = freshProgress();
+      await AsyncStorage.setItem(PROGRESS_KEY, JSON.stringify(fresh));
+      set({ status: 'ready', progress: fresh });
       return true;
     } catch {
       return false;

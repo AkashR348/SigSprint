@@ -36,7 +36,8 @@ this SDK; read it before touching an Expo or React Native API.
    (`no-restricted-imports`) fails any other import of the storage package. No save is a fresh
    install; a failed read or a damaged save is `unavailable`, and an update is refused unless the
    state is `ready`, so a damaged save is never overwritten. A change shows on screen only after it
-   is saved. `progressStore.test.ts` asserts each.
+   is saved. A damaged save is replaced only by `startFresh`, after the person agrees, and only once
+   a copy of it is on the phone. `progressStore.test.ts` asserts each.
 
 ## Layout
 

@@ -2,11 +2,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { freshProgress, recordAnswer, type Progress } from './progress';
 import {
+  BACKUP_KEY_PREFIX,
   getProgressState,
   loadProgress,
   PROGRESS_KEY,
   resetProgressStoreForTests,
   retryProgress,
+  startFresh,
   updateProgress,
 } from './progressStore';
 
@@ -114,4 +116,53 @@ test('two updates in a row both count', async () => {
   await loadProgress();
   expect(await Promise.all([updateProgress(answer), updateProgress(answer)])).toEqual([true, true]);
   expect(await stored()).toEqual({ version: 1, dailyGoal: 20, xp: 20, days: { '2026-11-17': 2 } });
+});
+
+const at = new Date(2026, 10, 17, 9, 0);
+const backupKey = `${BACKUP_KEY_PREFIX}${at.getTime()}`;
+
+test('starting fresh copies the damaged save aside first, then replaces it', async () => {
+  await AsyncStorage.setItem(PROGRESS_KEY, '{not json');
+  await loadProgress();
+  jest.clearAllMocks();
+  expect(await startFresh(at)).toBe(true);
+  expect(jest.mocked(AsyncStorage.setItem).mock.calls).toEqual([
+    [backupKey, '{not json'],
+    [PROGRESS_KEY, JSON.stringify(freshProgress())],
+  ]);
+  expect(await AsyncStorage.getItem(backupKey)).toBe('{not json');
+  expect(getProgressState()).toEqual({ status: 'ready', progress: freshProgress() });
+  expect(await updateProgress(answer)).toBe(true);
+});
+
+test('if the copy cannot be written, the damaged save is left alone', async () => {
+  await AsyncStorage.setItem(PROGRESS_KEY, '{not json');
+  await loadProgress();
+  jest.mocked(AsyncStorage.setItem).mockRejectedValueOnce(new Error('full'));
+  expect(await startFresh(at)).toBe(false);
+  expect(await AsyncStorage.getItem(PROGRESS_KEY)).toBe('{not json');
+  expect(getProgressState()).toEqual({ status: 'unavailable', reason: 'damaged' });
+});
+
+test('if the copy does not read back the same, the damaged save is left alone', async () => {
+  await AsyncStorage.setItem(PROGRESS_KEY, '{not json');
+  await loadProgress();
+  jest.mocked(AsyncStorage.getItem).mockResolvedValueOnce('{not json').mockResolvedValueOnce('{not');
+  expect(await startFresh(at)).toBe(false);
+  expect(await AsyncStorage.getItem(PROGRESS_KEY)).toBe('{not json');
+  expect(getProgressState()).toEqual({ status: 'unavailable', reason: 'damaged' });
+});
+
+test('starting fresh is refused for a sound save or a failed read', async () => {
+  await AsyncStorage.setItem(PROGRESS_KEY, JSON.stringify(oneAnswer));
+  await loadProgress();
+  expect(await startFresh(at)).toBe(false);
+  expect(await stored()).toEqual(oneAnswer);
+
+  resetProgressStoreForTests();
+  jest.mocked(AsyncStorage.getItem).mockRejectedValueOnce(new Error('disk'));
+  await loadProgress();
+  jest.clearAllMocks();
+  expect(await startFresh(at)).toBe(false);
+  expect(AsyncStorage.setItem).not.toHaveBeenCalled();
 });

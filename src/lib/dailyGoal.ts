@@ -20,5 +20,9 @@ export function goalLine(status: 'loading' | 'unavailable' | 'ready', progress: 
 /** What to tell someone whose save is unavailable; honest that answers will not be kept meanwhile. */
 export function unavailableNotice(reason: 'read' | 'damaged'): string {
   if (reason === 'read') return "Your saved progress couldn't be read just now. Answers won't be saved until it loads.";
-  return "The progress saved on this phone can't be read. Answers won't be saved for now. Nothing has been erased.";
+  return "The progress saved on this phone can't be read. Answers won't be saved until you start fresh. Nothing has been erased.";
 }
+
+// Shown before a damaged save is replaced; the person has to agree to it.
+export const startFreshWarning =
+  'Starting fresh sets your streak, points and daily counts back to zero. A copy of the old data stays on this phone.';
