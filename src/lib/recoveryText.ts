@@ -16,3 +16,11 @@ export function recoverySummary(found: Salvage | null): string {
 }
 
 export const recoveryFailed = "That didn't work, and nothing was changed. You can try again.";
+
+export const recoveryTitle = 'Old saved data';
+
+/** What to say once a backup is dealt with. `found` false: there was nothing in it to add. */
+export function recoveryResult(recover: boolean, found: boolean): string {
+  if (recover) return 'Added to your progress.';
+  return found ? 'Set aside. Your progress is unchanged.' : 'Cleared. Your progress is unchanged.';
+}

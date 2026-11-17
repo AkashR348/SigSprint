@@ -1,4 +1,4 @@
-import { dayKey, freshProgress, mergeRecovered, parseProgress, recordAnswer, salvageProgress, streakDays } from './progress';
+import { dayKey, freshProgress, mergeRecovered, parseProgress, recordAnswer, salvageHandled, salvageProgress, streakDays } from './progress';
 
 test('a day key is the local calendar date', () => {
   expect(dayKey(new Date(2026, 0, 5, 23, 59))).toBe('2026-01-05');
@@ -88,18 +88,29 @@ test.each([['text', 'oops'], ['a list', [1, 2]], ['nothing sound', { xp: 'many',
 test('recovered answers and points are added to what is there now, and the backup is marked handled', () => {
   const now = { ...freshProgress(), xp: 20, days: { '2026-11-17': 2 } };
   const found = { days: { '2026-11-16': 12, '2026-11-17': 3 }, answers: 15, xp: 130 };
-  expect(mergeRecovered(now, found, 'b1')).toEqual({
+  expect(mergeRecovered(now, found, ['b1'])).toEqual({
     version: 1, dailyGoal: 20, xp: 150, days: { '2026-11-16': 12, '2026-11-17': 5 }, handledBackups: ['b1'],
   });
 });
 
 test('unreadable points add nothing, and setting a backup aside changes only the handled list', () => {
   const now = { ...freshProgress(), xp: 20, days: { '2026-11-17': 2 } };
-  expect(mergeRecovered(now, { days: { '2026-11-16': 1 }, answers: 1, xp: null }, 'b1')?.xp).toBe(20);
-  expect(mergeRecovered(now, null, 'b1')).toEqual({ ...now, handledBackups: ['b1'] });
+  expect(mergeRecovered(now, { days: { '2026-11-16': 1 }, answers: 1, xp: null }, ['b1'])?.xp).toBe(20);
+  expect(mergeRecovered(now, null, ['b1'])).toEqual({ ...now, handledBackups: ['b1'] });
 });
 
 test('a merge that would pass exact integers is refused', () => {
   const full = { ...freshProgress(), xp: Number.MAX_SAFE_INTEGER };
-  expect(mergeRecovered(full, { days: {}, answers: 0, xp: 1 }, 'b1')).toBeNull();
+  expect(mergeRecovered(full, { days: {}, answers: 0, xp: 1 }, ['b1'])).toBeNull();
+});
+
+test('several keys are marked handled in one merge, each listed once', () => {
+  const now = { ...freshProgress(), handledBackups: ['b0'] };
+  expect(mergeRecovered(now, null, ['b1', 'b0', 'b2'])?.handledBackups).toEqual(['b0', 'b1', 'b2']);
+});
+
+test('handled keys are salvaged from a damaged save, and only the strings', () => {
+  expect(salvageHandled({ xp: 'bad', handledBackups: ['b1', 7, null, 'b2'] })).toEqual(['b1', 'b2']);
+  expect(salvageHandled({ handledBackups: 'b1' })).toEqual([]);
+  expect(salvageHandled(null)).toEqual([]);
 });

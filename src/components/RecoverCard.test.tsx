@@ -1,13 +1,15 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { AccessibilityInfo } from 'react-native';
 
-import { freshProgress } from '@/lib/progress';
+import { freshProgress, recordAnswer } from '@/lib/progress';
 import {
   BACKUP_KEY_PREFIX,
   getProgressState,
   loadProgress,
   PROGRESS_KEY,
   resetProgressStoreForTests,
+  updateProgress,
 } from '@/lib/progressStore';
 
 import { RecoverCard } from './RecoverCard';
@@ -73,4 +75,36 @@ test('a backup with nothing sound says so and offers only OK', async () => {
   expect(screen.queryByRole('button', { name: 'Add to my progress' })).toBeNull();
   await fireEvent.press(screen.getByRole('button', { name: 'OK' }));
   await waitFor(() => expect(screen.queryByText(/nothing can be recovered/)).toBeNull());
+});
+
+test('after adding, it says so, and a second backup starts unlocked with no error', async () => {
+  resetProgressStoreForTests();
+  await AsyncStorage.clear();
+  await AsyncStorage.setItem(backupKey, damaged);
+  await AsyncStorage.setItem(`${BACKUP_KEY_PREFIX}500`, JSON.stringify({ xp: 7 }));
+  await loadProgress();
+  const say = jest.spyOn(AccessibilityInfo, 'announceForAccessibility');
+  await render(<RecoverCard />);
+  await fireEvent.press(await screen.findByRole('button', { name: 'Add to my progress' }));
+  expect(await screen.findByText('Added to your progress.')).toBeTruthy();
+  expect(say).toHaveBeenCalledWith('Added to your progress.');
+  expect(await screen.findByText(/7 points/)).toBeTruthy();
+  expect(screen.queryByText(/nothing was changed/)).toBeNull();
+  expect(screen.getByRole('button', { name: 'Add to my progress' })).toBeEnabled();
+  expect(say.mock.calls.filter(([said]) => said === found)).toHaveLength(1);
+});
+
+test('the result stays on screen once the last backup is handled', async () => {
+  await start(damaged);
+  await fireEvent.press(await screen.findByRole('button', { name: "Don't recover" }));
+  expect(await screen.findByText('Set aside. Your progress is unchanged.')).toBeTruthy();
+  await waitFor(() => expect(screen.queryByRole('button')).toBeNull());
+});
+
+test('an answer does not send it looking through storage again', async () => {
+  await start(null);
+  await waitFor(() => expect(AsyncStorage.getAllKeys).toHaveBeenCalledTimes(1));
+  expect(await updateProgress((p) => recordAnswer(p, '2026-11-17', 10))).toBe(true);
+  await waitFor(() => expect(getProgressState()).toMatchObject({ progress: { xp: 10 } }));
+  expect(AsyncStorage.getAllKeys).toHaveBeenCalledTimes(1);
 });

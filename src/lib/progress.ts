@@ -66,16 +66,23 @@ export function salvageProgress(value: unknown): Salvage | null {
   return { days, answers, xp };
 }
 
-/** Current progress with a backup's sound parts added in and the backup marked handled. */
-export function mergeRecovered(progress: Progress, found: Salvage | null, backupKey: string): Progress | null {
+/** The handled-backup keys still readable in a damaged save, so starting fresh does not forget them. */
+export function salvageHandled(value: unknown): string[] {
+  if (typeof value !== 'object' || value === null) return [];
+  const list = (value as Record<string, unknown>).handledBackups;
+  return Array.isArray(list) ? list.filter((k): k is string => typeof k === 'string') : [];
+}
+
+/** Current progress with a backup's sound parts added in, and every key in `backupKeys` marked handled. */
+export function mergeRecovered(progress: Progress, found: Salvage | null, backupKeys: readonly string[]): Progress | null {
   const days = { ...progress.days };
   let xp = progress.xp;
   if (found !== null) {
     for (const [key, count] of Object.entries(found.days)) days[key] = answeredOn(days, key) + count;
     xp += found.xp ?? 0;
   }
-  const merged: Progress = { ...progress, xp, days, handledBackups: [...(progress.handledBackups ?? []), backupKey] };
-  return parseProgress(merged);
+  const handled = [...new Set([...(progress.handledBackups ?? []), ...backupKeys])];
+  return parseProgress({ ...progress, xp, days, handledBackups: handled });
 }
 
 /** The phone's local calendar day, so a streak turns over at the user's midnight. */

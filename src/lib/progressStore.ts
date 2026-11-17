@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { freshProgress, mergeRecovered, parseProgress, salvageProgress, type Progress, type Salvage } from './progress';
+import { freshProgress, mergeRecovered, parseProgress, salvageHandled, salvageProgress, type Progress, type Salvage } from './progress';
 
 export const PROGRESS_KEY = 'sigsprint.progress.v1';
 // A damaged save is copied here, with the time appended, before a fresh one replaces it.
@@ -104,6 +104,9 @@ export function startFresh(now: Date): Promise<boolean> {
         if ((await AsyncStorage.getItem(backupKey)) !== raw) return false;
       }
       const fresh = freshProgress();
+      // Backups the damaged save had already counted stay counted.
+      const handled = handledIn(raw);
+      if (handled.length > 0) fresh.handledBackups = handled;
       await AsyncStorage.setItem(PROGRESS_KEY, JSON.stringify(fresh));
       set({ status: 'ready', progress: fresh });
       return true;
@@ -116,27 +119,36 @@ export function startFresh(now: Date): Promise<boolean> {
 // A backup not yet recovered or set aside. `found` is null when no part of it can be trusted.
 export type Recovery = { key: string; found: Salvage | null };
 
-async function readBackup(key: string): Promise<Salvage | null> {
-  const raw = await AsyncStorage.getItem(key);
-  if (raw === null) return null;
+function parsed(raw: string): unknown {
   try {
-    return salvageProgress(JSON.parse(raw));
+    return JSON.parse(raw);
   } catch {
     return null;
   }
 }
 
+function handledIn(raw: string | null): string[] {
+  return raw === null ? [] : salvageHandled(parsed(raw)).filter((k) => k.startsWith(BACKUP_KEY_PREFIX));
+}
+
+async function waitingKeys(handled: readonly string[]): Promise<string[]> {
+  return (await AsyncStorage.getAllKeys()).filter((k) => k.startsWith(BACKUP_KEY_PREFIX) && !handled.includes(k));
+}
+
+const stamp = (key: string) => Number(key.slice(BACKUP_KEY_PREFIX.length)) || 0;
+
 /** The newest backup still waiting, or null when there is none or the phone could not be read. */
 export async function findRecovery(): Promise<Recovery | null> {
   const current = getProgressState();
   if (current.status !== 'ready') return null;
-  const handled = current.progress.handledBackups ?? [];
   try {
-    const keys = (await AsyncStorage.getAllKeys()).filter((k) => k.startsWith(BACKUP_KEY_PREFIX) && !handled.includes(k));
-    if (keys.length === 0) return null;
-    const stamp = (k: string) => Number(k.slice(BACKUP_KEY_PREFIX.length)) || 0;
-    const key = keys.reduce((a, b) => (stamp(b) > stamp(a) ? b : a));
-    return { key, found: await readBackup(key) };
+    const keys = (await waitingKeys(current.progress.handledBackups ?? [])).sort((a, b) => stamp(b) - stamp(a));
+    for (const key of keys) {
+      const raw = await AsyncStorage.getItem(key);
+      // A key whose text has gone is not a backup that "couldn't be read".
+      if (raw !== null) return { key, found: salvageProgress(parsed(raw)) };
+    }
+    return null;
   } catch {
     return null;
   }
@@ -147,10 +159,22 @@ export function handleRecovery(key: string, recover: boolean): Promise<boolean> 
   return enqueue(async () => {
     const current = getProgressState();
     if (current.status !== 'ready' || !key.startsWith(BACKUP_KEY_PREFIX)) return false;
-    if ((current.progress.handledBackups ?? []).includes(key)) return false;
+    const handled = current.progress.handledBackups ?? [];
+    if (handled.includes(key)) return false;
     try {
       // Read again here, so what is added is what is on the phone now.
-      const next = mergeRecovered(current.progress, recover ? await readBackup(key) : null, key);
+      const raw = await AsyncStorage.getItem(key);
+      // Nothing to add is not the same as added: a backup that has gone is a failure.
+      if (raw === null && recover) return false;
+      // Copies of the same text are one backup; handle them together so none is added twice.
+      const same = [key];
+      if (raw !== null) {
+        for (const other of await waitingKeys(handled)) {
+          if (other !== key && (await AsyncStorage.getItem(other)) === raw) same.push(other);
+        }
+      }
+      const found = recover && raw !== null ? salvageProgress(parsed(raw)) : null;
+      const next = mergeRecovered(current.progress, found, same);
       if (next === null) return false;
       await AsyncStorage.setItem(PROGRESS_KEY, JSON.stringify(next));
       set({ status: 'ready', progress: next });

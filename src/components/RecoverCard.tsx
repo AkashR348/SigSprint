@@ -1,18 +1,25 @@
-import { useEffect, useState, useSyncExternalStore } from 'react';
-import { AccessibilityInfo, StyleSheet, Text, View } from 'react-native';
+import { type ComponentRef, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { AccessibilityInfo, Platform, StyleSheet, Text, View } from 'react-native';
 
 import { ChunkyButton } from '@/components/ChunkyButton';
 import { findRecovery, getProgressState, handleRecovery, subscribeProgress, type Recovery } from '@/lib/progressStore';
-import { recoveryFailed, recoverySummary } from '@/lib/recoveryText';
+import { recoveryFailed, recoveryResult, recoverySummary, recoveryTitle } from '@/lib/recoveryText';
 import { colors, fonts, radius, space } from '@/theme/tokens';
 
-/** Offers the sound parts of a damaged save's backup. Draws nothing when no backup is waiting. */
+// `done` holds the buttons locked until the next look for backups replaces the card.
+type Step = { key: string; at: 'working' | 'failed' | 'done' };
+
+/** Offers the sound parts of a damaged save's backup. Draws nothing when there is nothing to say. */
 export function RecoverCard() {
   const state = useSyncExternalStore(subscribeProgress, getProgressState, getProgressState);
+  const ready = state.status === 'ready';
+  const handled = state.status === 'ready' ? state.progress.handledBackups : undefined;
   const [recovery, setRecovery] = useState<Recovery | null>(null);
-  const [step, setStep] = useState<'idle' | 'working' | 'failed'>('idle');
+  const [step, setStep] = useState<Step | null>(null);
+  const [result, setResult] = useState<string | null>(null);
+  const resultLine = useRef<ComponentRef<typeof Text>>(null);
 
-  // Look again whenever the save changes: a handled backup drops out, an older one may be next.
+  // Look when the save becomes ready and when a backup is handled; an answer changes neither.
   useEffect(() => {
     let current = true;
     void findRecovery().then((next) => {
@@ -21,36 +28,64 @@ export function RecoverCard() {
     return () => {
       current = false;
     };
-  }, [state]);
+  }, [ready, handled]);
 
+  const key = recovery?.key ?? null;
   const summary = recovery === null ? null : recoverySummary(recovery.found);
-  const said = step === 'failed' ? recoveryFailed : summary;
+  // A step belongs to the backup it was taken on, so the next card starts unlocked and without an error.
+  const at = step !== null && step.key === key ? step.at : 'idle';
 
-  // Nothing reads a card that appears on its own, so say it.
+  // Nothing reads a card that appears on its own, so say it once per backup.
   useEffect(() => {
-    if (said !== null) AccessibilityInfo.announceForAccessibility(said);
-  }, [said]);
+    if (summary !== null) AccessibilityInfo.announceForAccessibility(summary);
+  }, [key, summary]);
 
-  if (recovery === null || summary === null) return null;
+  useEffect(() => {
+    if (at === 'failed') AccessibilityInfo.announceForAccessibility(recoveryFailed);
+  }, [at]);
 
-  const handle = (recover: boolean) => {
-    setStep('working');
-    void handleRecovery(recovery.key, recover).then((done) => setStep(done ? 'idle' : 'failed'));
+  useEffect(() => {
+    if (result === null) return;
+    AccessibilityInfo.announceForAccessibility(result);
+    // The button that was focused is gone; put focus on the line that says what happened.
+    if (Platform.OS !== 'web' && resultLine.current) AccessibilityInfo.sendAccessibilityEvent(resultLine.current, 'focus');
+  }, [result]);
+
+  if (recovery === null && result === null) return null;
+
+  const handle = (target: Recovery, recover: boolean) => {
+    setStep({ key: target.key, at: 'working' });
+    void handleRecovery(target.key, recover).then((done) => {
+      setStep({ key: target.key, at: done ? 'done' : 'failed' });
+      if (done) setResult(recoveryResult(recover, target.found !== null));
+    });
   };
-  const busy = step === 'working';
+  const busy = at === 'working' || at === 'done';
 
   return (
     <View style={styles.card}>
-      <Text style={styles.text}>{summary}</Text>
-      {step === 'failed' && <Text style={styles.text}>{recoveryFailed}</Text>}
-      {recovery.found !== null ? (
+      {result !== null && (
+        <Text ref={resultLine} style={styles.text}>
+          {result}
+        </Text>
+      )}
+      {recovery !== null && at !== 'done' && (
         <>
-          <Text style={styles.text}>Adding it keeps everything you have now.</Text>
-          <ChunkyButton label="Add to my progress" disabled={busy} onPress={() => handle(true)} />
-          <ChunkyButton tone="plain" label="Don't recover" disabled={busy} onPress={() => handle(false)} />
+          <Text accessibilityRole="header" style={styles.title}>
+            {recoveryTitle}
+          </Text>
+          <Text style={styles.text}>{summary}</Text>
+          {at === 'failed' && <Text style={styles.text}>{recoveryFailed}</Text>}
+          {recovery.found !== null ? (
+            <>
+              <Text style={styles.text}>Adding it keeps everything you have now.</Text>
+              <ChunkyButton label="Add to my progress" disabled={busy} onPress={() => handle(recovery, true)} />
+              <ChunkyButton tone="plain" label="Don't recover" disabled={busy} onPress={() => handle(recovery, false)} />
+            </>
+          ) : (
+            <ChunkyButton tone="plain" label="OK" disabled={busy} onPress={() => handle(recovery, false)} />
+          )}
         </>
-      ) : (
-        <ChunkyButton tone="plain" label="OK" disabled={busy} onPress={() => handle(false)} />
       )}
     </View>
   );
@@ -58,5 +93,6 @@ export function RecoverCard() {
 
 const styles = StyleSheet.create({
   card: { gap: space.md, backgroundColor: colors.greenTint, borderRadius: radius.lg, padding: space.lg },
+  title: { fontFamily: fonts.black, fontSize: 17, color: colors.greenOnTint },
   text: { fontFamily: fonts.bold, fontSize: 15, lineHeight: 22, color: colors.greenOnTint },
 });

@@ -222,10 +222,73 @@ test('a recovery that cannot be saved changes nothing and can be tried again', a
   expect(await handleRecovery(backupKey, true)).toBe(true);
 });
 
-test('recovery is refused for a key that is not a backup, or before the save is ready', async () => {
+test('recovery is refused for a key that is not a backup', async () => {
   await freshAfterDamage(damagedSave);
   expect(await handleRecovery(PROGRESS_KEY, true)).toBe(false);
+});
+
+test('recovery is refused, and nothing is written, before the save is ready', async () => {
+  await freshAfterDamage(damagedSave);
   resetProgressStoreForTests();
+  jest.clearAllMocks();
+  expect(await findRecovery()).toBeNull();
+  expect(await handleRecovery(backupKey, true)).toBe(false);
+  expect(AsyncStorage.setItem).not.toHaveBeenCalled();
+});
+
+test('two copies of the same damaged save are added once and neither is offered again', async () => {
+  const raw = JSON.stringify({ version: 1, dailyGoal: 20, xp: 100, days: { '2026-11-16': 10, nope: 1 } });
+  const older = `${BACKUP_KEY_PREFIX}1000`;
+  const newer = `${BACKUP_KEY_PREFIX}2000`;
+  await AsyncStorage.setItem(older, raw);
+  await AsyncStorage.setItem(newer, raw);
+  await loadProgress();
+  expect((await findRecovery())?.key).toBe(newer);
+  expect(await handleRecovery(newer, true)).toBe(true);
+  expect(await stored()).toEqual({ ...freshProgress(), xp: 100, days: { '2026-11-16': 10 }, handledBackups: [newer, older] });
+  expect(await findRecovery()).toBeNull();
+  expect(await handleRecovery(older, true)).toBe(false);
+});
+
+test('a backup with different text is still offered after another is handled', async () => {
+  await AsyncStorage.setItem(`${BACKUP_KEY_PREFIX}1000`, JSON.stringify({ xp: 5 }));
+  await AsyncStorage.setItem(`${BACKUP_KEY_PREFIX}2000`, JSON.stringify({ xp: 7 }));
+  await loadProgress();
+  expect(await handleRecovery(`${BACKUP_KEY_PREFIX}2000`, true)).toBe(true);
+  expect(await findRecovery()).toEqual({ key: `${BACKUP_KEY_PREFIX}1000`, found: { days: {}, answers: 0, xp: 5 } });
+});
+
+test('starting fresh a second time remembers the backups already handled', async () => {
+  const first = `${BACKUP_KEY_PREFIX}1000`;
+  await AsyncStorage.setItem(first, JSON.stringify({ xp: 'bad', days: { '2026-11-16': 10 } }));
+  await loadProgress();
+  expect(await handleRecovery(first, true)).toBe(true);
+  // The save is damaged again, with its list of handled backups still readable.
+  const again = JSON.stringify({ ...(await stored() as object), xp: 'bad' });
+  await AsyncStorage.setItem(PROGRESS_KEY, again);
+  resetProgressStoreForTests();
+  await loadProgress();
+  expect(await startFresh(new Date(2000))).toBe(true);
+  expect(await stored()).toEqual({ ...freshProgress(), handledBackups: [first] });
+  const second = `${BACKUP_KEY_PREFIX}2000`;
+  expect((await findRecovery())?.key).toBe(second);
+  expect(await handleRecovery(second, true)).toBe(true);
+  expect(await findRecovery()).toBeNull();
+  expect((await stored() as { days: unknown }).days).toEqual({ '2026-11-16': 10 });
+});
+
+test('adding a backup that has gone fails and leaves it unhandled', async () => {
+  await freshAfterDamage(damagedSave);
+  await AsyncStorage.removeItem(backupKey);
+  jest.clearAllMocks();
+  expect(await handleRecovery(backupKey, true)).toBe(false);
+  expect(AsyncStorage.setItem).not.toHaveBeenCalled();
+  expect(getProgressState()).toEqual({ status: 'ready', progress: freshProgress() });
+});
+
+test('a backup key whose text has gone is not offered as unreadable', async () => {
+  await loadProgress();
+  jest.mocked(AsyncStorage.getAllKeys).mockResolvedValueOnce([backupKey]);
   expect(await findRecovery()).toBeNull();
 });
 
