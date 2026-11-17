@@ -2,14 +2,20 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { colors, fonts, radius, space } from '@/theme/tokens';
 
-type Props = { label: string; onPress: () => void; tone?: 'green' | 'yellow'; disabled?: boolean };
+type Tone = 'green' | 'yellow' | 'plain';
+type Props = { label: string; onPress: () => void; tone?: Tone; disabled?: boolean };
 
 const EDGE = 5;
 
+// `plain` is the quiet choice beside a main button; its outline holds 3:1 on white and on the tints.
+const tones: Record<Tone, { face: string; edge: string; text: string; outline: number }> = {
+  green: { face: colors.green, edge: colors.greenEdge, text: colors.white, outline: 0 },
+  yellow: { face: colors.yellow, edge: colors.yellowEdge, text: colors.ink, outline: 0 },
+  plain: { face: colors.surface, edge: colors.muted, text: colors.ink, outline: 2 },
+};
+
 export function ChunkyButton({ label, onPress, tone = 'green', disabled = false }: Props) {
-  const face = tone === 'green' ? colors.green : colors.yellow;
-  const edge = tone === 'green' ? colors.greenEdge : colors.yellowEdge;
-  const text = tone === 'green' ? colors.white : colors.ink;
+  const { face, edge, text, outline } = tones[tone];
   return (
     <Pressable
       accessibilityRole="button"
@@ -21,7 +27,12 @@ export function ChunkyButton({ label, onPress, tone = 'green', disabled = false 
         // The face slides onto its edge; the outer box keeps its size so nothing around it moves.
         <>
           <View style={[styles.edge, { backgroundColor: edge }]} />
-          <View style={[styles.face, { backgroundColor: face }, pressed && styles.pressed]}>
+          <View
+            style={[
+              styles.face,
+              { backgroundColor: face, borderWidth: outline, borderColor: edge },
+              pressed && styles.pressed,
+            ]}>
             <Text style={[styles.label, { color: text }]}>{label}</Text>
           </View>
         </>

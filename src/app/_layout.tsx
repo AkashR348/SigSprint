@@ -8,6 +8,7 @@ import { useEffect } from 'react';
 import { Platform, StyleSheet, Text, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { loadProgress } from '@/lib/progressStore';
 import { colors, fonts } from '@/theme/tokens';
 
 // Rejects harmlessly on a hot reload, when the splash is already gone.
@@ -32,6 +33,11 @@ export default function RootLayout() {
   const insets = useSafeAreaInsets();
   // Labels grow with the system text size up to the cap, and the bar grows with them.
   const labelScale = Math.min(useWindowDimensions().fontScale, MAX_LABEL_SCALE);
+
+  // Read the save at launch, whichever screen opens first.
+  useEffect(() => {
+    void loadProgress();
+  }, []);
 
   useEffect(() => {
     if (ready) SplashScreen.hideAsync().catch(() => {});

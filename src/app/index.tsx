@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChunkyButton } from '@/components/ChunkyButton';
 import { Mascot } from '@/components/Mascot';
 import { ModeTile } from '@/components/ModeTile';
+import { SaveNotice } from '@/components/SaveNotice';
 import { mockExam } from '@/content/domains';
 import { brand } from '@/lib/brand';
 import { goalLine, goalProgress } from '@/lib/dailyGoal';
@@ -60,7 +61,7 @@ export default function HomeScreen() {
           <Mascot />
           <View style={styles.goalBody}>
             <Text style={styles.goalKicker}>{"TODAY'S GOAL"}</Text>
-            <Text style={styles.goalLine}>{line}</Text>
+            <Text accessibilityLiveRegion="polite" style={styles.goalLine}>{line}</Text>
             {progress && (
               <View
                 accessibilityRole="progressbar"
@@ -72,6 +73,8 @@ export default function HomeScreen() {
             )}
           </View>
         </View>
+
+        {today.status === 'unavailable' && <SaveNotice reason={today.reason} />}
 
         <ChunkyButton tone="yellow" label={cta} onPress={() => router.push('/study')} />
 
