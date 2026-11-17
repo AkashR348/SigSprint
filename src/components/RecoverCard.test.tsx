@@ -77,28 +77,36 @@ test('a backup with nothing sound says so and offers only OK', async () => {
   await waitFor(() => expect(screen.queryByText(/nothing can be recovered/)).toBeNull());
 });
 
-test('after adding, it says so, and a second backup starts unlocked with no error', async () => {
+test('each backup added is said, and the next one starts unlocked with no error', async () => {
   resetProgressStoreForTests();
   await AsyncStorage.clear();
   await AsyncStorage.setItem(backupKey, damaged);
   await AsyncStorage.setItem(`${BACKUP_KEY_PREFIX}500`, JSON.stringify({ xp: 7 }));
   await loadProgress();
   const say = jest.spyOn(AccessibilityInfo, 'announceForAccessibility');
+  say.mockClear();
+  const added = () => say.mock.calls.filter(([said]) => said === 'Added to your progress.');
   await render(<RecoverCard />);
   await fireEvent.press(await screen.findByRole('button', { name: 'Add to my progress' }));
   expect(await screen.findByText('Added to your progress.')).toBeTruthy();
-  expect(say).toHaveBeenCalledWith('Added to your progress.');
+  expect(added()).toHaveLength(1);
   expect(await screen.findByText(/7 points/)).toBeTruthy();
   expect(screen.queryByText(/nothing was changed/)).toBeNull();
   expect(screen.getByRole('button', { name: 'Add to my progress' })).toBeEnabled();
   expect(say.mock.calls.filter(([said]) => said === found)).toHaveLength(1);
+  await fireEvent.press(screen.getByRole('button', { name: 'Add to my progress' }));
+  await waitFor(() => expect(added()).toHaveLength(2));
+  expect(getProgressState()).toMatchObject({ progress: { xp: 137 } });
 });
 
-test('the result stays on screen once the last backup is handled', async () => {
+test('the result stays on screen once the last backup is handled, until progress next changes', async () => {
   await start(damaged);
   await fireEvent.press(await screen.findByRole('button', { name: "Don't recover" }));
   expect(await screen.findByText('Set aside. Your progress is unchanged.')).toBeTruthy();
   await waitFor(() => expect(screen.queryByRole('button')).toBeNull());
+  expect(screen.getByText('Set aside. Your progress is unchanged.')).toBeTruthy();
+  expect(await updateProgress((p) => recordAnswer(p, '2026-11-17', 10))).toBe(true);
+  await waitFor(() => expect(screen.queryByText('Set aside. Your progress is unchanged.')).toBeNull());
 });
 
 test('an answer does not send it looking through storage again', async () => {

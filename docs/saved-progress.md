@@ -31,6 +31,7 @@ the points if they were a sound number. The daily goal is not recovered.
 - The backup is read again at the moment of the tap, so what is added is what is on the phone then.
   If it has gone by then, **Add** fails and says nothing changed; it is never reported as added.
 - Afterwards the card says what happened ("Added to your progress.") and a screen reader is moved
-  to that line.
-- A damaged save whose handled list cannot be read at all forgets it. Its own backup then has
-  nothing in it that included the older backup's numbers, so offering the older one again is right.
+  to that line. The line goes away the next time progress changes, such as the next answer.
+- Accepted risk: a save damaged so that its handled list is unreadable while some of its days still
+  are forgets that list. If its backup is added and then an older, already counted backup is added
+  too, the older numbers count twice. It takes two separate damaged saves and that exact damage.

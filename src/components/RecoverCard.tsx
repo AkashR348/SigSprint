@@ -2,12 +2,15 @@ import { type ComponentRef, useEffect, useRef, useState, useSyncExternalStore } 
 import { AccessibilityInfo, Platform, StyleSheet, Text, View } from 'react-native';
 
 import { ChunkyButton } from '@/components/ChunkyButton';
+import type { Progress } from '@/lib/progress';
 import { findRecovery, getProgressState, handleRecovery, subscribeProgress, type Recovery } from '@/lib/progressStore';
 import { recoveryFailed, recoveryResult, recoverySummary, recoveryTitle } from '@/lib/recoveryText';
 import { colors, fonts, radius, space } from '@/theme/tokens';
 
 // `done` holds the buttons locked until the next look for backups replaces the card.
 type Step = { key: string; at: 'working' | 'failed' | 'done' };
+// What happened to a backup, and the save it left. It stays up until the save next changes.
+type Result = { key: string; text: string; progress: Progress };
 
 /** Offers the sound parts of a damaged save's backup. Draws nothing when there is nothing to say. */
 export function RecoverCard() {
@@ -16,7 +19,7 @@ export function RecoverCard() {
   const handled = state.status === 'ready' ? state.progress.handledBackups : undefined;
   const [recovery, setRecovery] = useState<Recovery | null>(null);
   const [step, setStep] = useState<Step | null>(null);
-  const [result, setResult] = useState<string | null>(null);
+  const [told, setTold] = useState<Result | null>(null);
   const resultLine = useRef<ComponentRef<typeof Text>>(null);
 
   // Look when the save becomes ready and when a backup is handled; an answer changes neither.
@@ -44,12 +47,17 @@ export function RecoverCard() {
     if (at === 'failed') AccessibilityInfo.announceForAccessibility(recoveryFailed);
   }, [at]);
 
+  const result = told !== null && state.status === 'ready' && state.progress === told.progress ? told : null;
+  const resultKey = result?.key ?? null;
+  const resultText = result?.text ?? null;
+
+  // Keyed on the backup, so adding a second one is said again though the words are the same.
   useEffect(() => {
-    if (result === null) return;
-    AccessibilityInfo.announceForAccessibility(result);
+    if (resultText === null) return;
+    AccessibilityInfo.announceForAccessibility(resultText);
     // The button that was focused is gone; put focus on the line that says what happened.
     if (Platform.OS !== 'web' && resultLine.current) AccessibilityInfo.sendAccessibilityEvent(resultLine.current, 'focus');
-  }, [result]);
+  }, [resultKey, resultText]);
 
   if (recovery === null && result === null) return null;
 
@@ -57,7 +65,10 @@ export function RecoverCard() {
     setStep({ key: target.key, at: 'working' });
     void handleRecovery(target.key, recover).then((done) => {
       setStep({ key: target.key, at: done ? 'done' : 'failed' });
-      if (done) setResult(recoveryResult(recover, target.found !== null));
+      const after = getProgressState();
+      if (done && after.status === 'ready') {
+        setTold({ key: target.key, text: recoveryResult(recover, target.found !== null), progress: after.progress });
+      }
     });
   };
   const busy = at === 'working' || at === 'done';
@@ -65,8 +76,8 @@ export function RecoverCard() {
   return (
     <View style={styles.card}>
       {result !== null && (
-        <Text ref={resultLine} style={styles.text}>
-          {result}
+        <Text key={result.key} ref={resultLine} style={styles.text}>
+          {result.text}
         </Text>
       )}
       {recovery !== null && at !== 'done' && (
