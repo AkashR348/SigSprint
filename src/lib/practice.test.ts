@@ -1,7 +1,19 @@
 import type { DomainId } from '@/content/domains';
 import type { Question } from '@/content/questions';
 
-import { estimateMinutes, pickQuestions, scoreTest, timeLimitSeconds, type TestConfig } from './practice';
+import {
+  availableCount,
+  defaultConfig,
+  estimateMinutes,
+  fromParams,
+  pickQuestions,
+  scoreTest,
+  timeLimitSeconds,
+  toParams,
+  XP_PER_CORRECT,
+  xpFor,
+  type TestConfig,
+} from './practice';
 
 function make(domain: DomainId, n: number): Question[] {
   return Array.from({ length: n }, (_, i) => ({
@@ -78,4 +90,40 @@ test('scoring separates right, wrong and unanswered, by topic', () => {
 
 test('a test with no questions has no percentage, not zero percent', () => {
   expect(scoreTest([], []).percent).toBeNull();
+});
+
+describe('route params', () => {
+  const config: TestConfig = { domains: ['medications', 'safety'], count: 15, timed: true, showAnswers: 'end' };
+
+  test('a config survives the trip through params', () => {
+    expect(toParams(config)).toEqual({ topics: 'medications,safety', count: '15', timed: '1', show: 'end' });
+    expect(fromParams(toParams(config))).toEqual(config);
+    expect(fromParams(toParams(defaultConfig))).toEqual(defaultConfig);
+  });
+
+  test.each([
+    ['no topics', { topics: '' }],
+    ['a topic that does not exist', { topics: 'medications,cooking' }],
+    ['a count the setup screen does not offer', { count: '7' }],
+    ['a count that is not a number', { count: 'ten' }],
+    ['an unknown timer value', { timed: 'yes' }],
+    ['an unknown answers value', { show: 'never' }],
+    ['a repeated param', { topics: ['medications', 'safety'] }],
+    ['a missing param', { show: undefined }],
+  ])('%s gives no config', (_, change) => {
+    expect(fromParams({ ...toParams(config), ...change })).toBeNull();
+  });
+});
+
+test('a correct answer earns points and a wrong one earns none', () => {
+  const question = { answer: 2 } as Question;
+  expect(xpFor(question, 2)).toBe(XP_PER_CORRECT);
+  expect(xpFor(question, 1)).toBe(0);
+});
+
+test('available questions are counted for the chosen topics only', () => {
+  const pool = [{ domain: 'medications' }, { domain: 'medications' }, { domain: 'federal' }] as Question[];
+  expect(availableCount(pool, ['medications'])).toBe(2);
+  expect(availableCount(pool, ['medications', 'federal'])).toBe(3);
+  expect(availableCount(pool, [])).toBe(0);
 });

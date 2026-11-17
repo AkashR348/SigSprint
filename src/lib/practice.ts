@@ -18,6 +18,37 @@ export const defaultConfig: TestConfig = {
   showAnswers: 'each',
 };
 
+// Points for a correct answer. A wrong one earns none, and still counts toward the daily goal.
+export const XP_PER_CORRECT = 10;
+
+export function xpFor(question: Question, choice: number): number {
+  return choice === question.answer ? XP_PER_CORRECT : 0;
+}
+
+/** How many questions the pool holds for the chosen topics. */
+export function availableCount(pool: readonly Question[], ids: readonly DomainId[]): number {
+  return pool.filter((q) => ids.includes(q.domain)).length;
+}
+
+type Params = Record<string, string | string[] | undefined>;
+
+/** The setup screen's choices as route params. */
+export function toParams(config: TestConfig): Record<string, string> {
+  return { topics: config.domains.join(','), count: String(config.count), timed: config.timed ? '1' : '0', show: config.showAnswers };
+}
+
+/** A test config read back from route params, or null if any part is not one the setup screen offers. */
+export function fromParams(params: Params): TestConfig | null {
+  const { topics, count, timed, show } = params;
+  if (typeof topics !== 'string' || typeof count !== 'string') return null;
+  const asked = topics.split(',');
+  const chosen = domains.map((d) => d.id).filter((id) => asked.includes(id));
+  if (chosen.length === 0 || chosen.length !== asked.length) return null;
+  const n = QUESTION_COUNTS.find((c) => String(c) === count);
+  if (n === undefined || (timed !== '0' && timed !== '1') || (show !== 'each' && show !== 'end')) return null;
+  return { domains: chosen, count: n, timed: timed === '1', showAnswers: show };
+}
+
 /** Seconds allowed for `count` questions at the real exam's pace. */
 export function timeLimitSeconds(count: number): number {
   return Math.ceil((count * mockExam.minutes * 60) / mockExam.questions);
