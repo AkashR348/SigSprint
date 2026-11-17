@@ -33,6 +33,10 @@ this SDK; read it before touching an Expo or React Native API.
 8. **Comments are short and say only what the code can't**: an invariant, a unit, a trap, or the
    reason for a surprising choice. One line, two at most. No history; git has it.
 
+9. **Progress is read and written only through `src/lib/progressStore.ts`.** No save is a fresh
+   install; a failed read or a damaged save is `unavailable`, and an update is refused until the
+   state is `ready`, so a damaged save is never overwritten. `progressStore.test.ts` asserts each.
+
 ## Layout
 
 | Path | What it is |
