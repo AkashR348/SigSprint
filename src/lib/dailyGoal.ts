@@ -16,3 +16,9 @@ export function goalLine(status: 'loading' | 'unavailable' | 'ready', progress: 
   if (progress === null) return 'No daily goal to show yet';
   return `${progress.answered} of ${progress.goal} questions`;
 }
+
+/** What to tell someone whose save is unavailable; honest that answers will not be kept meanwhile. */
+export function unavailableNotice(reason: 'read' | 'damaged'): string {
+  if (reason === 'read') return "Your saved progress couldn't be read just now. Answers won't be saved until it loads.";
+  return "The progress saved on this phone can't be read. Answers won't be saved for now. Nothing has been erased.";
+}

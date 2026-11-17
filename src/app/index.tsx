@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect } from 'react';
+import { AccessibilityInfo, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ChunkyButton } from '@/components/ChunkyButton';
@@ -8,7 +9,8 @@ import { Mascot } from '@/components/Mascot';
 import { ModeTile } from '@/components/ModeTile';
 import { mockExam } from '@/content/domains';
 import { brand } from '@/lib/brand';
-import { goalLine, goalProgress } from '@/lib/dailyGoal';
+import { goalLine, goalProgress, unavailableNotice } from '@/lib/dailyGoal';
+import { retryProgress } from '@/lib/progressStore';
 import { useToday } from '@/lib/useToday';
 import { colors, fonts, radius, space } from '@/theme/tokens';
 
@@ -21,6 +23,12 @@ export default function HomeScreen() {
   const progress = today.status === 'ready' ? goalProgress(today.answeredToday, today.dailyGoal) : null;
 
   const line = goalLine(today.status, progress);
+  const notice = today.status === 'unavailable' ? unavailableNotice(today.reason) : null;
+
+  // iOS does not read an alert that appears on its own; Android uses the live region below.
+  useEffect(() => {
+    if (notice !== null) AccessibilityInfo.announceForAccessibility(notice);
+  }, [notice]);
 
   let cta = 'Start studying';
   if (progress?.done) cta = 'Goal done · keep going';
@@ -60,7 +68,7 @@ export default function HomeScreen() {
           <Mascot />
           <View style={styles.goalBody}>
             <Text style={styles.goalKicker}>{"TODAY'S GOAL"}</Text>
-            <Text style={styles.goalLine}>{line}</Text>
+            <Text accessibilityLiveRegion="polite" style={styles.goalLine}>{line}</Text>
             {progress && (
               <View
                 accessibilityRole="progressbar"
@@ -72,6 +80,16 @@ export default function HomeScreen() {
             )}
           </View>
         </View>
+
+        {today.status === 'unavailable' && notice !== null && (
+          <View accessibilityRole="alert" style={styles.notice}>
+            <Ionicons name="warning" size={20} color={colors.yellowOnTint} />
+            <View style={styles.noticeBody}>
+              <Text style={styles.noticeText}>{notice}</Text>
+              {today.reason === 'read' && <ChunkyButton label="Try again" onPress={() => void retryProgress()} />}
+            </View>
+          </View>
+        )}
 
         <ChunkyButton tone="yellow" label={cta} onPress={() => router.push('/study')} />
 
@@ -115,6 +133,9 @@ const styles = StyleSheet.create({
   goalLine: { fontFamily: fonts.black, fontSize: 20, color: colors.white },
   track: { height: BAR_HEIGHT, borderRadius: radius.pill, backgroundColor: colors.greenEdge, overflow: 'hidden' },
   fill: { height: BAR_HEIGHT, borderRadius: radius.pill, backgroundColor: colors.yellow },
+  notice: { flexDirection: 'row', gap: space.md, backgroundColor: colors.yellowTint, borderRadius: radius.lg, padding: space.lg },
+  noticeBody: { flex: 1, gap: space.md },
+  noticeText: { fontFamily: fonts.bold, fontSize: 15, lineHeight: 22, color: colors.yellowOnTint },
   row: { flexDirection: 'row', gap: space.md },
   disclaimer: { fontFamily: fonts.bold, fontSize: 12, lineHeight: 18, color: colors.muted, textAlign: 'center' },
 });
