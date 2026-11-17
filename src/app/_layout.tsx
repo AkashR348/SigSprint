@@ -5,11 +5,16 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import type { ComponentProps } from 'react';
 import { useEffect } from 'react';
+import { StyleSheet, Text, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, fonts } from '@/theme/tokens';
 
-SplashScreen.preventAutoHideAsync();
+// Rejects harmlessly on a hot reload, when the splash is already gone.
+SplashScreen.preventAutoHideAsync().catch(() => {});
+
+const MAX_LABEL_SCALE = 1.5;
+const LABEL_LINE = 16;
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
 
@@ -25,9 +30,11 @@ export default function RootLayout() {
   // A font that fails to load must not strand the user on the splash screen.
   const ready = loaded || error !== null;
   const insets = useSafeAreaInsets();
+  // Labels grow with the system text size up to the cap, and the bar grows with them.
+  const labelScale = Math.min(useWindowDimensions().fontScale, MAX_LABEL_SCALE);
 
   useEffect(() => {
-    if (ready) SplashScreen.hideAsync();
+    if (ready) SplashScreen.hideAsync().catch(() => {});
   }, [ready]);
 
   if (!ready) return null;
@@ -40,11 +47,10 @@ export default function RootLayout() {
           headerShown: false,
           tabBarActiveTintColor: colors.green,
           tabBarInactiveTintColor: colors.muted,
-          tabBarLabelStyle: { fontFamily: fonts.extraBold, fontSize: 12, lineHeight: 16 },
           tabBarStyle: {
             borderTopColor: colors.border,
             borderTopWidth: 2,
-            height: 76 + insets.bottom,
+            height: 60 + LABEL_LINE * labelScale + insets.bottom,
             paddingTop: 8,
             paddingBottom: 12 + insets.bottom,
           },
@@ -55,6 +61,11 @@ export default function RootLayout() {
             name={tab.name}
             options={{
               title: tab.title,
+              tabBarLabel: ({ color }) => (
+                <Text maxFontSizeMultiplier={MAX_LABEL_SCALE} numberOfLines={1} style={[styles.label, { color }]}>
+                  {tab.title}
+                </Text>
+              ),
               tabBarIcon: ({ color, size }) => <Ionicons name={tab.icon} size={size} color={typeof color === 'string' ? color : colors.muted} />,
             }}
           />
@@ -63,3 +74,7 @@ export default function RootLayout() {
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  label: { fontFamily: fonts.extraBold, fontSize: 12, lineHeight: LABEL_LINE },
+});

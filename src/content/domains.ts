@@ -16,8 +16,8 @@ export const mockExam = { questions: 90, scored: 80, minutes: 110 } as const;
 export function allocateQuestions(total: number, ids: readonly DomainId[]): Record<DomainId, number> {
   const out: Record<DomainId, number> = { medications: 0, federal: 0, safety: 0, orderEntry: 0 };
   const chosen = domains.filter((d) => ids.includes(d.id));
-  // A non-finite total has no split; Infinity would never leave the remainder loop.
-  if (!Number.isFinite(total)) return out;
+  // NaN, Infinity and totals past exact integers have no split.
+  if (!Number.isSafeInteger(Math.floor(total))) return out;
   const count = Math.max(0, Math.floor(total));
   if (chosen.length === 0 || count === 0) return out;
   const weightSum = chosen.reduce((sum, d) => sum + d.weight, 0);

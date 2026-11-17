@@ -5,16 +5,22 @@ export const colors = {
   surface: '#FFFFFF',
   surfaceSoft: '#F1F7F5',
   border: '#D6E4DF',
+  // Outline of a tappable surface; 3:1 on white.
+  borderStrong: '#7A968E',
   green: '#0A7C5F',
   greenEdge: '#075C46',
   greenTint: '#DDF5EC',
   greenOnTint: '#0A5C47',
-  onGreenSoft: '#C9F2E3',
+  onGreenSoft: '#E6F9F1',
   yellow: '#FFD43B',
-  yellowEdge: '#C99A00',
+  yellowEdge: '#B38900',
   yellowTint: '#FFF3C4',
   yellowOnTint: '#6B4A00',
   white: '#FFFFFF',
+  // Icon accents; each is at least 4.5:1 on white.
+  amber: '#B45309',
+  blue: '#1D4ED8',
+  pink: '#BE185D',
 } as const;
 
 export const fonts = {

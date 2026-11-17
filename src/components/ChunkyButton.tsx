@@ -1,6 +1,6 @@
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, fonts, radius } from '@/theme/tokens';
+import { colors, fonts, radius, space } from '@/theme/tokens';
 
 type Props = { label: string; onPress: () => void; tone?: 'green' | 'yellow'; disabled?: boolean };
 
@@ -16,25 +16,30 @@ export function ChunkyButton({ label, onPress, tone = 'green', disabled = false 
       accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}
-      style={({ pressed }) => [
-        styles.button,
-        { backgroundColor: face, borderBottomColor: edge, opacity: disabled ? 0.5 : 1 },
-        // The face drops onto its edge when pressed.
-        pressed && { borderBottomWidth: 0, marginTop: EDGE },
-      ]}>
-      <Text style={[styles.label, { color: text }]}>{label}</Text>
+      style={[styles.box, { opacity: disabled ? 0.5 : 1 }]}>
+      {({ pressed }) => (
+        // The face slides onto its edge; the outer box keeps its size so nothing around it moves.
+        <>
+          <View style={[styles.edge, { backgroundColor: edge }]} />
+          <View style={[styles.face, { backgroundColor: face }, pressed && styles.pressed]}>
+            <Text style={[styles.label, { color: text }]}>{label}</Text>
+          </View>
+        </>
+      )}
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  button: {
+  box: { paddingBottom: EDGE },
+  edge: { position: 'absolute', top: EDGE, bottom: 0, left: 0, right: 0, borderRadius: radius.lg },
+  face: {
     minHeight: 56,
     borderRadius: radius.lg,
-    borderBottomWidth: EDGE,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: space.xl,
   },
+  pressed: { transform: [{ translateY: EDGE }] },
   label: { fontFamily: fonts.black, fontSize: 18 },
 });

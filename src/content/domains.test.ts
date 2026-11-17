@@ -31,7 +31,7 @@ test('each domain carries its published 2026 weight', () => {
   });
 });
 
-test.each([NaN, Infinity, -Infinity])('a total of %p gives an empty split', (total) => {
+test.each([NaN, Infinity, -Infinity, 1e307])('a total of %p gives an empty split', (total) => {
   const split = allocateQuestions(total, domains.map((d) => d.id));
   expect(split).toEqual({ medications: 0, federal: 0, safety: 0, orderEntry: 0 });
 });
