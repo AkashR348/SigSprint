@@ -46,5 +46,5 @@ test('a test says what it did to the total, in words', () => {
 });
 
 test('the rule shown before a test names both amounts', () => {
-  expect(pointsRule).toBe('A correct answer adds 10 points. A wrong one takes 5.');
+  expect(pointsRule).toBe('Correct adds 10 points. Wrong takes 5.');
 });

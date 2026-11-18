@@ -36,7 +36,7 @@ export function pointsSummary(net: number): string {
   return `You ${net > 0 ? 'gained' : 'lost'} ${plural(Math.abs(net), 'point', 'points')}`;
 }
 
-export const pointsRule = `A correct answer adds ${XP_PER_CORRECT} points. A wrong one takes ${XP_PER_WRONG}.`;
+export const pointsRule = `Correct adds ${XP_PER_CORRECT} points. Wrong takes ${XP_PER_WRONG}.`;
 
 export const savingNotice = 'Saving your last answer…';
 export const answerUnsaved = "This answer couldn't be saved on this phone.";
