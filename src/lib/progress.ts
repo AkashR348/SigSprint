@@ -1,11 +1,15 @@
 // What the phone remembers. `days` maps a local date (YYYY-MM-DD) to questions answered that day.
 // `handledBackups` lists backups already recovered or set aside, so none is offered or counted twice.
+// `cards` holds each flashcard's review schedule by card id; a card not in it has never been rated.
+export type CardState = { due: string; gap: number };
+
 export type Progress = {
   version: 1;
   dailyGoal: number;
   xp: number;
   days: Record<string, number>;
   handledBackups?: string[];
+  cards?: Record<string, CardState>;
 };
 
 export const DEFAULT_DAILY_GOAL = 20;
@@ -41,6 +45,16 @@ export function parseProgress(value: unknown): Progress | null {
   if (v.handledBackups !== undefined) {
     if (!Array.isArray(v.handledBackups) || !v.handledBackups.every((k) => typeof k === 'string')) return null;
     progress.handledBackups = [...v.handledBackups];
+  }
+  if (v.cards !== undefined) {
+    if (typeof v.cards !== 'object' || v.cards === null || Array.isArray(v.cards)) return null;
+    const cards: Record<string, CardState> = {};
+    for (const [id, state] of Object.entries(v.cards)) {
+      const s = state as Partial<CardState> | null;
+      if (typeof s !== 'object' || s === null || typeof s.due !== 'string' || !isDayKey(s.due) || !isCount(s.gap)) return null;
+      cards[id] = { due: s.due, gap: s.gap };
+    }
+    progress.cards = cards;
   }
   return progress;
 }
@@ -92,10 +106,13 @@ export function dayKey(date: Date): string {
   return `${date.getFullYear()}-${month}-${day}`;
 }
 
-function dayBefore(key: string): string {
+/** The day `days` after `key`; negative goes back. */
+export function addDays(key: string, days: number): string {
   const [y, m, d] = key.split('-').map(Number);
-  return dayKey(new Date(y, m - 1, d - 1));
+  return dayKey(new Date(y, m - 1, d + days));
 }
+
+const dayBefore = (key: string) => addDays(key, -1);
 
 /** Questions answered on a day. A checked save with no entry for the day means none were. */
 export function answeredOn(days: Record<string, number>, day: string): number {

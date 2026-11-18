@@ -37,3 +37,15 @@ the points if they were a sound number. The daily goal is not recovered.
 - Accepted risk: a save damaged so that its handled list is unreadable while some of its days still
   are forgets that list. If its backup is added and then an older, already counted backup is added
   too, the older numbers count twice. It takes two separate damaged saves and that exact damage.
+
+## Flashcard schedules
+
+Each rated drug card is kept in the save under `cards`, by the card's id, as the day it is next due
+and the gap in days that led there (`src/lib/review.ts`).
+
+- **Again** keeps the card in the sitting and makes it due the same day. **Good** waits 2 days and
+  **Easy** 5; a repeat doubles (Good) or triples (Easy) the last gap, up to 60 days.
+- One schedule covers a card in both directions, brand first or generic first.
+- A rating shows as counted only after it is saved, and adds one to the day's answers and no points.
+- A card that has never been rated has no entry; it is new, not due on some day.
+- A backup's card schedules are not recovered: only its days and points are.

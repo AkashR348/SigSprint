@@ -123,3 +123,18 @@ test('handled keys are salvaged from a damaged save, and only the strings', () =
   expect(salvageHandled({ handledBackups: 'b1' })).toEqual([]);
   expect(salvageHandled(null)).toEqual([]);
 });
+
+test('a save with card schedules is read back whole', () => {
+  const saved = { ...freshProgress(), cards: { 'drug-a': { due: '2026-11-19', gap: 2 }, 'drug-b': { due: '2026-11-17', gap: 0 } } };
+  expect(parseProgress(saved)).toEqual(saved);
+});
+
+test.each([
+  ['a list instead of a map', []],
+  ['a due day that is not a date', { 'drug-a': { due: 'soon', gap: 2 } }],
+  ['a negative gap', { 'drug-a': { due: '2026-11-19', gap: -1 } }],
+  ['a missing gap', { 'drug-a': { due: '2026-11-19' } }],
+  ['an empty schedule', { 'drug-a': null }],
+])('a save whose card schedules hold %s is rejected, not read as unrated', (_name, cards) => {
+  expect(parseProgress({ ...freshProgress(), cards })).toBeNull();
+});
