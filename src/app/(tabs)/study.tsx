@@ -3,6 +3,8 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ModeTile } from '@/components/ModeTile';
+import { drugCards } from '@/content/drugCards';
+import { deckLabel } from '@/lib/flashcardText';
 import { colors, fonts, space } from '@/theme/tokens';
 
 export default function StudyScreen() {
@@ -19,8 +21,15 @@ export default function StudyScreen() {
             iconColor={colors.green}
             onPress={() => router.push('/practice/setup')}
           />
+          <ModeTile
+            title="Flashcards"
+            detail={deckLabel(drugCards.length)}
+            icon="albums"
+            iconColor={colors.amber}
+            onPress={() => router.push('/flashcards/setup')}
+          />
         </View>
-        <Text style={styles.detail}>Flashcards and the mock exam are being built next.</Text>
+        <Text style={styles.detail}>The mock exam is being built next.</Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -30,6 +39,6 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.surface },
   content: { padding: space.xl, gap: space.lg },
   title: { fontFamily: fonts.black, fontSize: 26, color: colors.ink },
-  row: { flexDirection: 'row' },
+  row: { flexDirection: 'row', gap: space.md },
   detail: { fontFamily: fonts.bold, fontSize: 16, lineHeight: 24, color: colors.muted },
 });

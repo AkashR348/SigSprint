@@ -168,6 +168,7 @@ export function PracticeRunner({ questions, config, onLeave, onNewTest }: Props)
         <View style={styles.header}>
           <IconButton icon="close" label="Close practice test" onPress={() => setLeaving(true)} />
           <View
+            accessible
             accessibilityRole="progressbar"
             accessibilityLabel={`Question ${run.index + 1} of ${total}`}
             accessibilityValue={{ min: 0, max: total, now: run.index + 1 }}
@@ -204,6 +205,7 @@ export function PracticeRunner({ questions, config, onLeave, onNewTest }: Props)
                 accessibilityRole="radio"
                 accessibilityLabel={`${LETTERS[i]}. ${choice}${mark}`}
                 accessibilityState={{ checked: on, disabled: run.revealed }}
+                aria-checked={on}
                 disabled={run.revealed}
                 onPress={() => setRun(pick(run, i))}
                 style={[styles.choice, on && styles.choiceOn, isAnswer && styles.choiceRight, isWrong && styles.choiceWrong]}>

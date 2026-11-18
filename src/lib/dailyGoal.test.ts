@@ -20,7 +20,7 @@ test('no goal or an unreadable count is null, never a zero', () => {
 test('the goal line names each state and never prints a number it does not have', () => {
   expect(goalLine('loading', null)).toBe('Loading your day');
   expect(goalLine('unavailable', null)).toBe("Couldn't load your progress");
-  expect(goalLine('ready', goalProgress(3, 20))).toBe('3 of 20 questions');
+  expect(goalLine('ready', goalProgress(3, 20))).toBe('3 of 20 done');
   expect(goalLine('ready', goalProgress(Number.NaN, 20))).toBe('No daily goal to show yet');
   expect(goalLine('ready', goalProgress(0, 0))).toBe('No daily goal to show yet');
 });

@@ -9,8 +9,10 @@ import { ModeTile } from '@/components/ModeTile';
 import { RecoverCard } from '@/components/RecoverCard';
 import { SaveNotice } from '@/components/SaveNotice';
 import { mockExam } from '@/content/domains';
+import { drugCards } from '@/content/drugCards';
 import { brand } from '@/lib/brand';
 import { goalLine, goalProgress } from '@/lib/dailyGoal';
+import { deckLabel } from '@/lib/flashcardText';
 import { useToday } from '@/lib/useToday';
 import { colors, fonts, radius, space } from '@/theme/tokens';
 
@@ -65,6 +67,7 @@ export default function HomeScreen() {
             <Text accessibilityLiveRegion="polite" style={styles.goalLine}>{line}</Text>
             {progress && (
               <View
+                accessible
                 accessibilityRole="progressbar"
                 accessibilityLabel="Today's goal progress"
                 accessibilityValue={{ min: 0, max: 100, now: Math.round(progress.fraction * 100) }}
@@ -82,7 +85,7 @@ export default function HomeScreen() {
 
         <View style={styles.row}>
           <ModeTile title="Practice test" detail="Pick topics and length" icon="document-text" iconColor={colors.green} onPress={() => router.push('/practice/setup')} />
-          <ModeTile title="Flashcards" detail="Top 200 drugs" icon="albums" iconColor={colors.amber} onPress={() => router.push('/study')} />
+          <ModeTile title="Flashcards" detail={deckLabel(drugCards.length)} icon="albums" iconColor={colors.amber} onPress={() => router.push('/flashcards/setup')} />
         </View>
         <View style={styles.row}>
           <ModeTile title="Mock exam" detail={`${mockExam.questions} questions, timed`} icon="timer" iconColor={colors.blue} onPress={() => router.push('/study')} />
