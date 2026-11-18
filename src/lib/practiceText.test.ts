@@ -1,4 +1,4 @@
-import { leaveNotice, pointsLabel, pointsSpoken, scoreLine, setupSummary, shortNotice, unsavedNotice } from './practiceText';
+import { leaveNotice, pointsLabel, pointsRule, pointsSpoken, pointsSummary, scoreLine, setupSummary, shortNotice, unsavedNotice } from './practiceText';
 
 test('the summary names questions, topics and time, with singulars', () => {
   expect(setupSummary(10, 3, 13)).toBe('10 questions · 3 topics · 13 minutes');
@@ -36,4 +36,15 @@ test('points are drawn with a sign and spoken in words', () => {
   expect(pointsSpoken(10)).toBe('Plus 10 points');
   expect(pointsSpoken(-5)).toBe('Minus 5 points');
   expect(pointsSpoken(-1)).toBe('Minus 1 point');
+});
+
+test('a test says what it did to the total, in words', () => {
+  expect(pointsSummary(15)).toBe('You gained 15 points');
+  expect(pointsSummary(-5)).toBe('You lost 5 points');
+  expect(pointsSummary(1)).toBe('You gained 1 point');
+  expect(pointsSummary(0)).toBe("Your points didn't change");
+});
+
+test('the rule shown before a test names both amounts', () => {
+  expect(pointsRule).toBe('A correct answer adds 10 points. A wrong one takes 5.');
 });

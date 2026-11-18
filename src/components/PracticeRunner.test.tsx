@@ -100,6 +100,9 @@ test('an answer that cannot be saved says so and is counted on the results, not 
   expect(screen.getByText('2 of 2 correct')).toBeTruthy();
   expect(screen.getByText(/1 answer couldn't be saved/)).toBeTruthy();
   expect(await stored()).toMatchObject({ xp: 10 });
+  // Only the saved answer is in the points.
+  expect(screen.getByText('You gained 10 points')).toBeTruthy();
+  expect(screen.getAllByText(/XP/)).toHaveLength(1);
 });
 
 test('with answers at the end nothing is revealed until the results', async () => {
@@ -115,6 +118,28 @@ test('with answers at the end nothing is revealed until the results', async () =
   expect(screen.getByText('Your answer: one b')).toBeTruthy();
   expect(screen.getByText('Why one')).toBeTruthy();
   await waitFor(async () => expect(await stored()).toMatchObject({ xp: 10, days: { [dayKey(new Date())]: 2 } }));
+});
+
+test('with answers at the end the results show the points for the test and for each question', async () => {
+  await start({ timed: false, showAnswers: 'end' });
+  await choose(/one a/);
+  await press('Next');
+  expect(screen.queryByText(/XP/)).toBeNull();
+  await choose(/two a/);
+  await press('Finish');
+  expect(await screen.findByText('You gained 5 points')).toBeTruthy();
+  expect(screen.getByLabelText('Plus 10 points')).toHaveTextContent('+10 XP');
+  expect(screen.getByLabelText('Minus 5 points')).toHaveTextContent('\u22125 XP');
+});
+
+test('a wrong answer at a total of 0 changes nothing, and the results say so', async () => {
+  await start({ timed: false, showAnswers: 'end' });
+  await choose(/one b/);
+  await press('Next');
+  await choose(/two a/);
+  await press('Finish');
+  expect(await screen.findByText("Your points didn't change")).toBeTruthy();
+  expect(screen.queryByText(/XP/)).toBeNull();
 });
 
 test('closing asks first, and keeps the test when the person stays', async () => {

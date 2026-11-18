@@ -1,3 +1,5 @@
+import { XP_PER_CORRECT, XP_PER_WRONG } from './practice';
+
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
 /** The line above Start test. `minutes` is null when the timer is off. */
@@ -27,6 +29,14 @@ export function pointsLabel(change: number): string {
 export function pointsSpoken(change: number): string {
   return `${change > 0 ? 'Plus' : 'Minus'} ${plural(Math.abs(change), 'point', 'points')}`;
 }
+
+/** What a whole test did to the total, from the answers that were saved. */
+export function pointsSummary(net: number): string {
+  if (net === 0) return "Your points didn't change";
+  return `You ${net > 0 ? 'gained' : 'lost'} ${plural(Math.abs(net), 'point', 'points')}`;
+}
+
+export const pointsRule = `A correct answer adds ${XP_PER_CORRECT} points. A wrong one takes ${XP_PER_WRONG}.`;
 
 export const savingNotice = 'Saving your last answer…';
 export const answerUnsaved = "This answer couldn't be saved on this phone.";

@@ -7,13 +7,15 @@ import { SourceLink } from '@/components/SourceLink';
 import { domainName } from '@/content/domains';
 import type { Question } from '@/content/questions';
 import { scoreTest, type Answers } from '@/lib/practice';
-import { savingNotice, scoreLine, unsavedNotice } from '@/lib/practiceText';
+import { pointsLabel, pointsSpoken, pointsSummary, savingNotice, scoreLine, unsavedNotice } from '@/lib/practiceText';
 import { useAnnounce } from '@/lib/useAnnounce';
 import { colors, fonts, radius, space } from '@/theme/tokens';
 
 type Props = {
   questions: readonly Question[];
   answers: Answers;
+  // By question number: the points each saved answer really moved the total by.
+  points: Readonly<Record<number, number>>;
   // Answers that could not be written to progress; never folded into the score.
   unsaved: number;
   // An answer is still being written; it is not yet known to be saved.
@@ -23,11 +25,14 @@ type Props = {
   onDone: () => void;
 };
 
-export function PracticeResults({ questions, answers, unsaved, saving, timedOut, onNewTest, onDone }: Props) {
+export function PracticeResults({ questions, answers, points, unsaved, saving, timedOut, onNewTest, onDone }: Props) {
   const result = scoreTest(questions, answers);
   const heading = timedOut ? "Time's up" : 'Test complete';
   const opening = `${heading}. ${scoreLine(result.correct, result.total)}.`;
   const title = useRef<ComponentRef<typeof Text>>(null);
+  const changes = Object.values(points);
+  // No line until every save has settled, and none when nothing was saved.
+  const net = saving || changes.length === 0 ? null : changes.reduce((sum, n) => sum + n, 0);
   const status = saving ? savingNotice : unsaved > 0 ? unsavedNotice(unsaved) : null;
 
   // The results replace the question that had focus, sometimes with no tap at all.
@@ -47,6 +52,7 @@ export function PracticeResults({ questions, answers, unsaved, saving, timedOut,
         {result.percent !== null && <Text style={styles.percent}>{result.percent}%</Text>}
         <Text style={styles.scoreLine}>{scoreLine(result.correct, result.total)}</Text>
         {result.unanswered > 0 && <Text style={styles.scoreNote}>{result.unanswered} not answered</Text>}
+        {net !== null && <Text style={styles.scoreNote}>{pointsSummary(net)}</Text>}
       </View>
 
       {status !== null && (
@@ -73,6 +79,7 @@ export function PracticeResults({ questions, answers, unsaved, saving, timedOut,
         {questions.map((q, i) => {
           const given = answers[i] ?? null;
           const right = given === q.answer;
+          const change = points[i] ?? 0;
           return (
             <View key={q.id} style={styles.review}>
               <View style={styles.verdict}>
@@ -84,6 +91,11 @@ export function PracticeResults({ questions, answers, unsaved, saving, timedOut,
                 <Text style={styles.verdictText}>
                   {i + 1}. {right ? 'Correct' : given === null ? 'Not answered' : 'Incorrect'}
                 </Text>
+                {change !== 0 && (
+                  <Text accessibilityLabel={pointsSpoken(change)} style={styles.xp}>
+                    {pointsLabel(change)}
+                  </Text>
+                )}
               </View>
               <Text style={styles.stem}>{q.stem}</Text>
               {given !== null && !right && <Text style={styles.body}>Your answer: {q.choices[given]}</Text>}
@@ -121,7 +133,17 @@ const styles = StyleSheet.create({
   rowScore: { fontFamily: fonts.black, fontSize: 15, color: colors.ink },
   review: { gap: space.sm, borderWidth: 2, borderColor: colors.border, borderRadius: radius.lg, padding: space.lg },
   verdict: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  verdictText: { fontFamily: fonts.black, fontSize: 15, color: colors.ink },
+  verdictText: { flex: 1, fontFamily: fonts.black, fontSize: 15, color: colors.ink },
+  xp: {
+    fontFamily: fonts.black,
+    fontSize: 14,
+    color: colors.ink,
+    backgroundColor: colors.yellow,
+    borderRadius: radius.pill,
+    overflow: 'hidden',
+    paddingVertical: space.xs,
+    paddingHorizontal: space.md,
+  },
   stem: { fontFamily: fonts.black, fontSize: 16, lineHeight: 22, color: colors.ink },
   body: { fontFamily: fonts.bold, fontSize: 15, lineHeight: 22, color: colors.ink },
 });

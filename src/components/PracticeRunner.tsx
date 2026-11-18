@@ -103,6 +103,8 @@ export function PracticeRunner({ questions, config, onLeave, onNewTest }: Props)
 
   const unsaved = Object.values(saves).filter((s) => s === 'failed').length;
   const saving = Object.values(saves).some((s) => s === 'saving');
+  const points: Record<number, number> = {};
+  for (const [at, s] of Object.entries(saves)) if (typeof s === 'object') points[Number(at)] = s.change;
   const thisFailed = run.revealed && saves[run.index] === 'failed';
   useAnnounce(thisFailed ? answerUnsaved : null);
 
@@ -117,6 +119,7 @@ export function PracticeRunner({ questions, config, onLeave, onNewTest }: Props)
       <PracticeResults
         questions={run.questions}
         answers={run.answers}
+        points={points}
         unsaved={unsaved}
         saving={saving}
         timedOut={timedOut}

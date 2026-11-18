@@ -10,7 +10,7 @@ import { Segmented } from '@/components/Segmented';
 import { domains, type DomainId } from '@/content/domains';
 import { starterQuestions } from '@/content/starterQuestions';
 import { availableCount, defaultConfig, estimateMinutes, QUESTION_COUNTS, toParams, type TestConfig } from '@/lib/practice';
-import { setupSummary, shortNotice } from '@/lib/practiceText';
+import { pointsRule, setupSummary, shortNotice } from '@/lib/practiceText';
 import { useAnnounce } from '@/lib/useAnnounce';
 import { colors, edge as edges, fonts, minTouch, radius, space } from '@/theme/tokens';
 
@@ -100,6 +100,7 @@ export default function PracticeSetupScreen() {
             {notice}
           </Text>
         )}
+        <Text style={styles.summary}>{pointsRule}</Text>
         <Text accessibilityLiveRegion="polite" style={styles.summary}>
           {setupSummary(length, chosen.length, config.timed ? estimateMinutes(length) : null)}
         </Text>
