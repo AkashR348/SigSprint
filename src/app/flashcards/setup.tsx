@@ -7,7 +7,17 @@ import { ChunkyButton } from '@/components/ChunkyButton';
 import { IconButton } from '@/components/IconButton';
 import { Segmented } from '@/components/Segmented';
 import { drugCards } from '@/content/drugCards';
-import { flashcardRule, flashcardsLoading, flashcardsNeedSave, readyLine, type Direction } from '@/lib/flashcardText';
+import {
+  DEFAULT_SITTING,
+  flashcardRule,
+  flashcardsLoading,
+  flashcardsNeedSave,
+  readyLine,
+  sittingLimit,
+  SITTINGS,
+  type Direction,
+  type Sitting,
+} from '@/lib/flashcardText';
 import { dayKey } from '@/lib/progress';
 import { getProgressState, subscribeProgress } from '@/lib/progressStore';
 import { countReady, daysBetween, nextDue, sessionCards } from '@/lib/review';
@@ -18,6 +28,7 @@ const ids = drugCards.map((c) => c.id);
 export default function FlashcardSetupScreen() {
   const router = useRouter();
   const [direction, setDirection] = useState<Direction>('brand');
+  const [size, setSize] = useState<Sitting>(DEFAULT_SITTING);
   const state = useSyncExternalStore(subscribeProgress, getProgressState, getProgressState);
 
   // Not loaded, can't load, and nothing due are three lines, never one.
@@ -28,7 +39,7 @@ export default function FlashcardSetupScreen() {
     const today = dayKey(new Date());
     const { review, fresh } = countReady(ids, state.progress.cards, today);
     const due = nextDue(ids, state.progress.cards, today);
-    ready = sessionCards(drugCards, state.progress.cards, today).length;
+    ready = sessionCards(drugCards, state.progress.cards, today, sittingLimit(size) ?? 0).length;
     line = readyLine(review, fresh, ready, due === null ? null : daysBetween(today, due));
   }
 
@@ -53,6 +64,9 @@ export default function FlashcardSetupScreen() {
             onChange={setDirection}
           />
         </View>
+        <View style={styles.row}>
+          <Segmented label="Cards this sitting" options={SITTINGS} value={size} onChange={setSize} />
+        </View>
       </ScrollView>
       <View style={styles.footer}>
         <Text style={styles.summary}>{flashcardRule}</Text>
@@ -60,7 +74,7 @@ export default function FlashcardSetupScreen() {
         <ChunkyButton
           label="Start"
           disabled={ready === 0}
-          onPress={() => router.push({ pathname: '/flashcards/run', params: { direction } })}
+          onPress={() => router.push({ pathname: '/flashcards/run', params: { direction, size } })}
         />
       </View>
     </SafeAreaView>

@@ -27,7 +27,17 @@ test('a first visit offers a sitting of new cards and starts in the chosen direc
   expect(screen.getByText("Each card counts once a day toward today's goal. Cards give no XP.")).toBeTruthy();
   await fireEvent.press(screen.getByRole('radio', { name: 'Show me, Generic name' }));
   await fireEvent.press(screen.getByRole('button', { name: 'Start' }));
-  expect(mockPush).toHaveBeenCalledWith({ pathname: '/flashcards/run', params: { direction: 'generic' } });
+  expect(mockPush).toHaveBeenCalledWith({ pathname: '/flashcards/run', params: { direction: 'generic', size: '20' } });
+});
+
+test('the sitting size can be 10, 20 or every card that is ready', async () => {
+  await open(null);
+  await fireEvent.press(screen.getByRole('radio', { name: 'Cards this sitting, 10' }));
+  expect(screen.getByText('24 cards ready: 24 new. This sitting has 10.')).toBeTruthy();
+  await fireEvent.press(screen.getByRole('radio', { name: 'Cards this sitting, All' }));
+  expect(screen.getByText('24 cards ready: 24 new.')).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', { name: 'Start' }));
+  expect(mockPush).toHaveBeenCalledWith({ pathname: '/flashcards/run', params: { direction: 'brand', size: 'all' } });
 });
 
 test('when nothing is due the screen says when the next card is, and Start is off', async () => {

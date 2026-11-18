@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChunkyButton } from '@/components/ChunkyButton';
 import { FlashcardRunner } from '@/components/FlashcardRunner';
 import { drugCards, type DrugCard } from '@/content/drugCards';
-import { flashcardsBroken, flashcardsLoading, flashcardsNeedSave, toDirection } from '@/lib/flashcardText';
+import { flashcardsBroken, flashcardsLoading, flashcardsNeedSave, sittingLimit, toDirection } from '@/lib/flashcardText';
 import { dayKey } from '@/lib/progress';
 import { getProgressState, subscribeProgress } from '@/lib/progressStore';
 import { sessionCards } from '@/lib/review';
@@ -14,16 +14,20 @@ import { colors, fonts, space } from '@/theme/tokens';
 
 export default function FlashcardRunScreen() {
   const router = useRouter();
-  const direction = toDirection(useLocalSearchParams().direction);
+  const params = useLocalSearchParams();
+  const direction = toDirection(params.direction);
+  const limit = sittingLimit(params.size);
   const state = useSyncExternalStore(subscribeProgress, getProgressState, getProgressState);
   // Drawn when the save is first read, and only then, so rating a card never reshuffles the sitting.
   const [cards, setCards] = useState<DrugCard[] | null>(null);
-  if (cards === null && state.status === 'ready') setCards(sessionCards(drugCards, state.progress.cards, dayKey(new Date())));
+  if (cards === null && limit !== null && state.status === 'ready') {
+    setCards(sessionCards(drugCards, state.progress.cards, dayKey(new Date()), limit));
+  }
 
   // Back to the tab the setup screen was opened from; a screen opened by a link has nothing under it.
   const leave = () => (router.canDismiss() ? router.dismiss(2) : router.replace('/'));
-  const waiting = cards === null && state.status === 'loading';
-  const trouble = direction === null || cards?.length === 0 ? flashcardsBroken : cards === null ? flashcardsNeedSave : null;
+  const waiting = cards === null && limit !== null && state.status === 'loading';
+  const trouble = direction === null || limit === null || cards?.length === 0 ? flashcardsBroken : cards === null ? flashcardsNeedSave : null;
 
   return (
     <SafeAreaView style={styles.screen}>

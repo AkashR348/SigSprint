@@ -44,7 +44,7 @@ Each rated drug card is kept in the save under `cards`, by the card's id, as the
 the gap in days that led there, and the last day it counted toward the goal (`src/lib/review.ts`).
 
 - **Again** keeps the card in the sitting and makes it due the same day. **Good** waits 2 days and
-  **Easy** 5; a repeat doubles (Good) or triples (Easy) the last gap, up to 60 days.
+  **Easy** 5; a repeat doubles (Good) or triples (Easy) the last gap, up to 30 days.
 - One schedule covers a card in both directions, brand first or generic first.
 - A rating shows as counted only after it is saved. A card adds one to the day's count the first
   time it is rated that day and nothing after that, so repeating Again cannot fill the goal. It adds

@@ -6,10 +6,7 @@ export const RATINGS: readonly Rating[] = ['again', 'good', 'easy'];
 // Days. Good starts at 2 and doubles; Easy starts at 5 and triples; no gap passes MAX_GAP.
 const FIRST_GAP = { good: 2, easy: 5 } as const;
 const GROWTH = { good: 2, easy: 3 } as const;
-export const MAX_GAP = 60;
-
-// Most cards in one sitting.
-export const SESSION_LIMIT = 20;
+export const MAX_GAP = 30;
 
 /** Days until a card comes back. Again is 0: it returns in this session and is due today. */
 export function nextGap(previous: number | undefined, rating: Rating): number {
@@ -44,7 +41,7 @@ export function countReady(ids: readonly string[], states: States, today: string
 }
 
 /** The cards for one sitting: those due longest first, then new ones in deck order, up to `limit`. */
-export function sessionCards<T extends { id: string }>(deck: readonly T[], states: States, today: string, limit = SESSION_LIMIT): T[] {
+export function sessionCards<T extends { id: string }>(deck: readonly T[], states: States, today: string, limit: number): T[] {
   const due = deck
     .filter((c) => states?.[c.id] !== undefined && states[c.id].due <= today)
     .sort((a, b) => (states?.[a.id].due ?? '').localeCompare(states?.[b.id].due ?? ''));

@@ -9,8 +9,9 @@ test('Again comes back the same day, Good in 2 days and Easy in 5', () => {
 
 test('the gap grows each time a card is rated Good or Easy again, and stops at the cap', () => {
   expect([nextGap(2, 'good'), nextGap(4, 'good'), nextGap(5, 'easy'), nextGap(2, 'easy')]).toEqual([4, 8, 15, 6]);
-  expect(nextGap(40, 'good')).toBe(MAX_GAP);
-  expect(nextGap(40, 'easy')).toBe(MAX_GAP);
+  expect(MAX_GAP).toBe(30);
+  expect([nextGap(15, 'good'), nextGap(16, 'good'), nextGap(40, 'good')]).toEqual([30, 30, 30]);
+  expect([nextGap(10, 'easy'), nextGap(11, 'easy'), nextGap(40, 'easy')]).toEqual([30, 30, 30]);
 });
 
 test('Again sets a grown gap back, so the next Good starts from 2', () => {
@@ -72,9 +73,9 @@ test('cards due today or earlier are counted for review, and unrated ones as new
 });
 
 test('a sitting takes the longest overdue first, then new cards, and leaves out what is not due', () => {
-  expect(sessionCards(deck, states, today).map((c) => c.id)).toEqual(['d', 'a', 'b', 'e', 'f']);
+  expect(sessionCards(deck, states, today, 20).map((c) => c.id)).toEqual(['d', 'a', 'b', 'e', 'f']);
   expect(sessionCards(deck, states, today, 4).map((c) => c.id)).toEqual(['d', 'a', 'b', 'e']);
-  expect(sessionCards(deck, undefined, today).map((c) => c.id)).toEqual(ids);
+  expect(sessionCards(deck, undefined, today, Number.POSITIVE_INFINITY).map((c) => c.id)).toEqual(ids);
 });
 
 test('the next due day is the soonest after today, or null when none is scheduled', () => {

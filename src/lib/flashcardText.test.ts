@@ -1,4 +1,4 @@
-import { doneLine, gapLabel, ratingSpoken, readyLine, toDirection, deckLabel, nameSize } from './flashcardText';
+import { doneLine, gapLabel, ratingSpoken, readyLine, toDirection, deckLabel, nameSize, sittingLimit } from './flashcardText';
 
 test('only the two directions are read from a route', () => {
   expect(toDirection('brand')).toBe('brand');
@@ -45,4 +45,9 @@ test('a drug name keeps its full size when it fits, and shrinks by its longest w
   expect(nameSize('levothyroxine', 60, 3)).toBe(16);
   expect(nameSize('', 306, 1)).toBe(36);
   expect(nameSize('Zestril', 0, 1)).toBe(36);
+});
+
+test('a sitting size is 10, 20 or no limit, and anything else is not one', () => {
+  expect([sittingLimit('10'), sittingLimit('20'), sittingLimit('all')]).toEqual([10, 20, Number.POSITIVE_INFINITY]);
+  expect([sittingLimit('30'), sittingLimit(20), sittingLimit(undefined), sittingLimit(['10'])]).toEqual([null, null, null, null]);
 });

@@ -6,14 +6,14 @@ import { drugCards } from '@/content/drugCards';
 import { loadProgress, PROGRESS_KEY, resetProgressStoreForTests } from '@/lib/progressStore';
 
 const mockRouter = { canDismiss: jest.fn(), dismiss: jest.fn(), dismissTo: jest.fn(), replace: jest.fn() };
-let mockParams: Record<string, string> = { direction: 'brand' };
+let mockParams: Record<string, string> = { direction: 'brand', size: '20' };
 jest.mock('expo-router', () => ({ useRouter: () => mockRouter, useLocalSearchParams: () => mockParams }));
 
 beforeEach(async () => {
   resetProgressStoreForTests();
   await AsyncStorage.clear();
   jest.clearAllMocks();
-  mockParams = { direction: 'brand' };
+  mockParams = { direction: 'brand', size: '20' };
 });
 
 // Jest finds no tests under src/app, so the route's test lives here.
@@ -38,7 +38,24 @@ test('a save that cannot be read says so, and is not shown as loading or as a ca
 });
 
 test('a direction that is not one is refused', async () => {
-  mockParams = { direction: 'sideways' };
+  mockParams = { direction: 'sideways', size: '20' };
+  await loadProgress();
+  await render(<FlashcardRunScreen />);
+  expect(screen.getByText("Flashcards couldn't be set up. Go back and try again.")).toBeTruthy();
+});
+
+test.each([
+  ['10', 'Card 1 of 10'],
+  ['all', `Card 1 of ${drugCards.length}`],
+])('a sitting of size %s holds that many cards', async (size, name) => {
+  mockParams = { direction: 'brand', size };
+  await loadProgress();
+  await render(<FlashcardRunScreen />);
+  expect(screen.getByRole('progressbar', { name })).toBeTruthy();
+});
+
+test('a size that is not one is refused, not read as a default', async () => {
+  mockParams = { direction: 'brand', size: '500' };
   await loadProgress();
   await render(<FlashcardRunScreen />);
   expect(screen.getByText("Flashcards couldn't be set up. Go back and try again.")).toBeTruthy();

@@ -11,6 +11,22 @@ export function toDirection(value: unknown): Direction | null {
   return value === 'brand' || value === 'generic' ? value : null;
 }
 
+// How many cards a sitting holds, as chosen on the setup screen and carried in the route.
+export type Sitting = '10' | '20' | 'all';
+export const SITTINGS: readonly { value: Sitting; label: string }[] = [
+  { value: '10', label: '10' },
+  { value: '20', label: '20' },
+  { value: 'all', label: 'All' },
+];
+export const DEFAULT_SITTING: Sitting = '20';
+
+/** The most cards for the route's `size` value, or null when it is not one. All has no limit. */
+export function sittingLimit(value: unknown): number | null {
+  if (value === '10') return 10;
+  if (value === '20') return 20;
+  return value === 'all' ? Number.POSITIVE_INFINITY : null;
+}
+
 export const NAME_SIZE = 36;
 const NAME_FLOOR = 16;
 // Width of an average Nunito Black letter, as a share of the font size.
