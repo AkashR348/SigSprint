@@ -1,0 +1,42 @@
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Stack } from 'expo-router/stack';
+import { useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { ChunkyButton } from '@/components/ChunkyButton';
+import { PracticeRunner } from '@/components/PracticeRunner';
+import { starterQuestions } from '@/content/starterQuestions';
+import { fromParams, pickQuestions } from '@/lib/practice';
+import { setupBroken } from '@/lib/practiceText';
+import { colors, fonts, space } from '@/theme/tokens';
+
+export default function PracticeRunScreen() {
+  const router = useRouter();
+  const config = fromParams(useLocalSearchParams());
+  // Drawn once, so a redraw never reshuffles a test in progress.
+  const [questions] = useState(() => (config === null ? [] : pickQuestions(starterQuestions, config)));
+  // Goes back to the setup screen if it is underneath, and opens it if it is not.
+  const newTest = () => router.dismissTo('/practice/setup');
+
+  return (
+    <SafeAreaView style={styles.screen}>
+      {/* No swipe back: leaving a test goes through the question the close button asks. */}
+      <Stack.Screen options={{ gestureEnabled: false }} />
+      {config === null || questions.length === 0 ? (
+        <View style={styles.broken}>
+          <Text accessibilityRole="header" style={styles.text}>{setupBroken}</Text>
+          <ChunkyButton label="Back" onPress={newTest} />
+        </View>
+      ) : (
+        <PracticeRunner questions={questions} config={config} onLeave={() => router.dismissTo('/')} onNewTest={newTest} />
+      )}
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.surface },
+  broken: { flex: 1, justifyContent: 'center', padding: space.xxl, gap: space.lg },
+  text: { fontFamily: fonts.black, fontSize: 18, lineHeight: 26, color: colors.ink, textAlign: 'center' },
+});
