@@ -3,6 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Mascot } from '@/components/Mascot';
 import { colors, fonts, space } from '@/theme/tokens';
+import React from 'react';
 
 /** Placeholder for a tab whose screens are not built yet. */
 export function ComingNext({ title, detail }: { title: string; detail: string }) {

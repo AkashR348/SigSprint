@@ -8,6 +8,7 @@ import { useEffect } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, fonts } from '@/theme/tokens';
+import React from 'react';
 
 SplashScreen.preventAutoHideAsync();
 

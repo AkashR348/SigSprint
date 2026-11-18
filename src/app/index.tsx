@@ -11,6 +11,7 @@ import { brand } from '@/lib/brand';
 import { goalProgress } from '@/lib/dailyGoal';
 import { useToday } from '@/lib/useToday';
 import { colors, fonts, radius, space } from '@/theme/tokens';
+import React from 'react';
 
 export default function HomeScreen() {
   const router = useRouter();

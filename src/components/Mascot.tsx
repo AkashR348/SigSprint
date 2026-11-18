@@ -1,6 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
 import { colors } from '@/theme/tokens';
+import React from 'react';
 
 /** The capsule mascot, drawn with views so it needs no image or SVG library. */
 export function Mascot({ size = 84 }: { size?: number }) {

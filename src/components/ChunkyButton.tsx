@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text } from 'react-native';
 
 import { colors, fonts, radius } from '@/theme/tokens';
+import React from 'react';
 
 type Props = { label: string; onPress: () => void; tone?: 'green' | 'yellow'; disabled?: boolean };
 
