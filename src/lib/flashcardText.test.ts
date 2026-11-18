@@ -1,4 +1,4 @@
-import { doneLine, gapLabel, ratingSpoken, readyLine, toDirection } from './flashcardText';
+import { doneLine, gapLabel, ratingSpoken, readyLine, toDirection, deckLabel } from './flashcardText';
 
 test('only the two directions are read from a route', () => {
   expect(toDirection('brand')).toBe('brand');
@@ -27,6 +27,12 @@ test('nothing due is not the same as no cards', () => {
 });
 
 test('the end of a sitting says how many cards and when the next is due', () => {
-  expect(doneLine(1, 2)).toBe('You went through 1 card. Your next card is due in 2 days.');
-  expect(doneLine(20, null)).toBe('You went through 20 cards.');
+  expect(doneLine(1, 0, 2)).toBe('You went through 1 card. Your next card is due in 2 days.');
+  expect(doneLine(20, 0, null)).toBe('You went through 20 cards.');
+});
+
+test('the end of a sitting says cards are still ready before it names a later day', () => {
+  expect(doneLine(20, 4, 2)).toBe('You went through 20 cards. 4 more cards are ready now.');
+  expect(doneLine(20, 1, null)).toBe('You went through 20 cards. 1 more card is ready now.');
+  expect(deckLabel(24)).toBe('Top drugs: 24 so far');
 });

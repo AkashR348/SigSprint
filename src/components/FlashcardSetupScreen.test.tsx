@@ -24,7 +24,7 @@ const base = { version: 1, dailyGoal: 20, xp: 0, days: {} };
 test('a first visit offers a sitting of new cards and starts in the chosen direction', async () => {
   await open(null);
   expect(screen.getByText('24 cards ready: 24 new. This sitting has 20.')).toBeTruthy();
-  expect(screen.getByText("Every card you rate counts toward today's goal. Cards give no XP.")).toBeTruthy();
+  expect(screen.getByText("Each card counts once a day toward today's goal. Cards give no XP.")).toBeTruthy();
   await fireEvent.press(screen.getByRole('radio', { name: 'Show me, Generic name' }));
   await fireEvent.press(screen.getByRole('button', { name: 'Start' }));
   expect(mockPush).toHaveBeenCalledWith({ pathname: '/flashcards/run', params: { direction: 'generic' } });

@@ -1,22 +1,24 @@
 import { Ionicons } from '@expo/vector-icons';
 import { type ComponentRef, useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { AccessibilityInfo, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ChunkyButton } from '@/components/ChunkyButton';
 import { IconButton } from '@/components/IconButton';
 import { SourceLink } from '@/components/SourceLink';
 import { stemSource, type DrugCard } from '@/content/drugCards';
 import { cardUnsaved, directionName, doneLine, gapLabel, ratingName, ratingSpoken, type Direction } from '@/lib/flashcardText';
+import { focusOn } from '@/lib/focusOn';
 import { dayKey } from '@/lib/progress';
 import { getProgressState, subscribeProgress, updateProgress } from '@/lib/progressStore';
-import { daysBetween, nextDue, nextGap, rateCard, RATINGS, type Rating } from '@/lib/review';
+import { countReady, daysBetween, nextDue, nextGap, rateCard, RATINGS, type Rating } from '@/lib/review';
 import { useAnnounce } from '@/lib/useAnnounce';
 import { colors, edge as edges, fonts, radius, space } from '@/theme/tokens';
 
-type Props = { cards: readonly DrugCard[]; direction: Direction; onLeave: () => void };
+// `deck` is every card there is, so the end can say what is still waiting outside this sitting.
+type Props = { cards: readonly DrugCard[]; deck: readonly DrugCard[]; direction: Direction; onLeave: () => void };
 
 /** One sitting of flashcards: show a name, reveal the card, rate it. Each rating is saved before the next card. */
-export function FlashcardRunner({ cards, direction, onLeave }: Props) {
+export function FlashcardRunner({ cards, deck, direction, onLeave }: Props) {
   // Again sends a card to the back of the queue; Good and Easy take it out.
   const [queue, setQueue] = useState<readonly DrugCard[]>(cards);
   const [shown, setShown] = useState(false);
@@ -33,19 +35,22 @@ export function FlashcardRunner({ cards, direction, onLeave }: Props) {
   const asked = card ? (direction === 'brand' ? card.brand : card.generic) : '';
   const answer = card ? (direction === 'brand' ? card.generic : card.brand) : '';
   const view = card === undefined ? 'done' : `${card.id}:${shown}:${queue.length}`;
-  const said = card === undefined ? null : shown ? `${asked} is ${answer}.` : null;
+  const mounted = useRef(false);
 
-  useAnnounce(said);
   useAnnounce(failed ? cardUnsaved : null);
-  // Each card, and each side of it, replaces what had focus.
+  // Each card, and each side of it, replaces what had focus. Focus reads the name, so nothing is announced as well.
+  // The first card leaves focus where the screen put it.
   useEffect(() => {
-    if (Platform.OS !== 'web' && heading.current) AccessibilityInfo.sendAccessibilityEvent(heading.current, 'focus');
+    if (mounted.current) focusOn(heading.current);
+    mounted.current = true;
   }, [view]);
 
   if (card === undefined) {
-    const due = nextDue(cards.map((c) => c.id), states, dayKey(new Date()));
-    const nextIn = due === null ? null : daysBetween(dayKey(new Date()), due);
-    return <Done line={doneLine(total, nextIn)} onLeave={onLeave} />;
+    const today = dayKey(new Date());
+    const ids = deck.map((c) => c.id);
+    const { review, fresh } = countReady(ids, states, today);
+    const due = nextDue(ids, states, today);
+    return <Done line={doneLine(total, review + fresh, due === null ? null : daysBetween(today, due))} onLeave={onLeave} />;
   }
 
   const rate = (rating: Rating) => {
@@ -74,10 +79,9 @@ export function FlashcardRunner({ cards, direction, onLeave }: Props) {
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.header}>
-          <IconButton icon="close" label="Close flashcards" onPress={onLeave} />
-          <View style={styles.headerBody}>
-            <Text style={styles.deck}>Top 200 drugs · {directionName[direction]}</Text>
+        <View style={styles.top}>
+          <View style={styles.header}>
+            <IconButton icon="close" label="Close flashcards" onPress={onLeave} />
             <View
               accessible
               accessibilityRole="progressbar"
@@ -86,10 +90,11 @@ export function FlashcardRunner({ cards, direction, onLeave }: Props) {
               style={styles.track}>
               <View style={[styles.fill, { width: `${(finished / total) * 100}%` }]} />
             </View>
+            <Text accessibilityElementsHidden importantForAccessibility="no" style={styles.count}>
+              {at} of {total}
+            </Text>
           </View>
-          <Text accessibilityElementsHidden importantForAccessibility="no" style={styles.count}>
-            {at} of {total}
-          </Text>
+          <Text style={styles.deck}>Top drugs · {directionName[direction]}</Text>
         </View>
 
         <View style={styles.card}>
@@ -175,10 +180,8 @@ function Fact({ label, value }: { label: string; value: string }) {
 
 function Done({ line, onLeave }: { line: string; onLeave: () => void }) {
   const title = useRef<ComponentRef<typeof Text>>(null);
-  useEffect(() => {
-    AccessibilityInfo.announceForAccessibility(`All done for now. ${line}`);
-    if (Platform.OS !== 'web' && title.current) AccessibilityInfo.sendAccessibilityEvent(title.current, 'focus');
-  }, [line]);
+  // Focus reads the title and the line under it follows, so nothing is announced as well.
+  useEffect(() => focusOn(title.current), []);
   return (
     <View style={styles.done}>
       <Text ref={title} accessibilityRole="header" style={styles.doneTitle}>
@@ -195,10 +198,10 @@ const EDGE = edges.tile;
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { padding: space.xl, gap: space.xl },
+  top: { gap: space.sm },
   header: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-  headerBody: { flex: 1, gap: space.sm },
   deck: { fontFamily: fonts.black, fontSize: 14, color: colors.ink },
-  track: { height: 12, borderRadius: radius.pill, backgroundColor: colors.border, overflow: 'hidden' },
+  track: { flex: 1, height: 12, borderRadius: radius.pill, backgroundColor: colors.border, overflow: 'hidden' },
   fill: { height: 12, borderRadius: radius.pill, backgroundColor: colors.green },
   count: { fontFamily: fonts.black, fontSize: 15, color: colors.muted },
   card: {

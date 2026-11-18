@@ -1,7 +1,8 @@
-// What the phone remembers. `days` maps a local date (YYYY-MM-DD) to questions answered that day.
+// What the phone remembers. `days` maps a local date (YYYY-MM-DD) to the answers and cards counted that day.
 // `handledBackups` lists backups already recovered or set aside, so none is offered or counted twice.
 // `cards` holds each flashcard's review schedule by card id; a card not in it has never been rated.
-export type CardState = { due: string; gap: number };
+// `rated` is the last day the card counted toward that day's goal.
+export type CardState = { due: string; gap: number; rated?: string };
 
 export type Progress = {
   version: 1;
@@ -48,13 +49,15 @@ export function parseProgress(value: unknown): Progress | null {
   }
   if (v.cards !== undefined) {
     if (typeof v.cards !== 'object' || v.cards === null || Array.isArray(v.cards)) return null;
-    const cards: Record<string, CardState> = {};
+    const cards: [string, CardState][] = [];
     for (const [id, state] of Object.entries(v.cards)) {
       const s = state as Partial<CardState> | null;
       if (typeof s !== 'object' || s === null || typeof s.due !== 'string' || !isDayKey(s.due) || !isCount(s.gap)) return null;
-      cards[id] = { due: s.due, gap: s.gap };
+      if (s.rated !== undefined && (typeof s.rated !== 'string' || !isDayKey(s.rated))) return null;
+      cards.push([id, s.rated === undefined ? { due: s.due, gap: s.gap } : { due: s.due, gap: s.gap, rated: s.rated }]);
     }
-    progress.cards = cards;
+    // fromEntries makes every id an own key, a "__proto__" one included.
+    progress.cards = Object.fromEntries(cards);
   }
   return progress;
 }

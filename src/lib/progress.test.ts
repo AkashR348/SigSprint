@@ -125,8 +125,14 @@ test('handled keys are salvaged from a damaged save, and only the strings', () =
 });
 
 test('a save with card schedules is read back whole', () => {
-  const saved = { ...freshProgress(), cards: { 'drug-a': { due: '2026-11-19', gap: 2 }, 'drug-b': { due: '2026-11-17', gap: 0 } } };
+  const saved = { ...freshProgress(), cards: { 'drug-a': { due: '2026-11-19', gap: 2, rated: '2026-11-17' }, 'drug-b': { due: '2026-11-17', gap: 0 } } };
   expect(parseProgress(saved)).toEqual(saved);
+});
+
+test('a card called __proto__ is kept as a card and changes nothing else', () => {
+  const parsed = parseProgress(JSON.parse('{"version":1,"dailyGoal":20,"xp":0,"days":{},"cards":{"__proto__":{"due":"2026-11-19","gap":2}}}'));
+  expect(Object.keys(parsed?.cards ?? {})).toEqual(['__proto__']);
+  expect(Object.getPrototypeOf(parsed?.cards)).toBe(Object.prototype);
 });
 
 test.each([
@@ -134,6 +140,7 @@ test.each([
   ['a due day that is not a date', { 'drug-a': { due: 'soon', gap: 2 } }],
   ['a negative gap', { 'drug-a': { due: '2026-11-19', gap: -1 } }],
   ['a missing gap', { 'drug-a': { due: '2026-11-19' } }],
+  ['a counted day that is not a date', { 'drug-a': { due: '2026-11-19', gap: 2, rated: 'today' } }],
   ['an empty schedule', { 'drug-a': null }],
 ])('a save whose card schedules hold %s is rejected, not read as unrated', (_name, cards) => {
   expect(parseProgress({ ...freshProgress(), cards })).toBeNull();

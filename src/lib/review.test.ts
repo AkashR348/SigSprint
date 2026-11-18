@@ -21,14 +21,30 @@ test('Again sets a grown gap back, so the next Good starts from 2', () => {
 test('rating a card schedules it, counts toward the day, and adds no points', () => {
   const before = { ...freshProgress(), xp: 30 };
   const after = rateCard(before, today, 'drug-a', 'good');
-  expect(after).toEqual({ ...before, days: { [today]: 1 }, cards: { 'drug-a': { due: '2026-11-19', gap: 2 } } });
+  expect(after).toEqual({ ...before, days: { [today]: 1 }, cards: { 'drug-a': { due: '2026-11-19', gap: 2, rated: today } } });
   const again = after && rateCard(after, '2026-11-19', 'drug-a', 'easy');
   expect(again).toMatchObject({ xp: 30, days: { [today]: 1, '2026-11-19': 1 }, cards: { 'drug-a': { due: '2026-11-25', gap: 6 } } });
   expect(before.cards).toBeUndefined();
 });
 
+test('a card counts toward a day once, however often it is rated that day', () => {
+  let p = rateCard(freshProgress(), today, 'drug-a', 'again');
+  for (let i = 0; i < 20; i += 1) p = p && rateCard(p, today, 'drug-a', 'again');
+  p = p && rateCard(p, today, 'drug-a', 'good');
+  expect(p).toMatchObject({ days: { [today]: 1 }, cards: { 'drug-a': { due: '2026-11-19', gap: 2, rated: today } } });
+  p = p && rateCard(p, today, 'drug-b', 'again');
+  expect(p?.days).toEqual({ [today]: 2 });
+  p = p && rateCard(p, '2026-11-18', 'drug-a', 'easy');
+  expect(p?.days).toEqual({ [today]: 2, '2026-11-18': 1 });
+});
+
+test('a card saved without a counted day counts the next time it is rated', () => {
+  const saved = { ...freshProgress(), cards: { 'drug-a': { due: today, gap: 0 } } };
+  expect(rateCard(saved, today, 'drug-a', 'good')?.days).toEqual({ [today]: 1 });
+});
+
 test('a due date crosses the end of a month', () => {
-  expect(rateCard(freshProgress(), '2026-11-28', 'drug-a', 'easy')?.cards).toEqual({ 'drug-a': { due: '2026-12-03', gap: 5 } });
+  expect(rateCard(freshProgress(), '2026-11-28', 'drug-a', 'easy')?.cards).toEqual({ 'drug-a': { due: '2026-12-03', gap: 5, rated: '2026-11-28' } });
 });
 
 test('a rating on a day that is not a date, or for no card, is refused', () => {

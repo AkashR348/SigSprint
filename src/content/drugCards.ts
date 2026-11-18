@@ -6,7 +6,7 @@ export type DrugCard = {
   generic: string;
   drugClass: string;
   usedFor: string;
-  // The first adverse reactions the label lists as most common.
+  // The first adverse reactions the label lists as most common, or its boxed warning where it lists none.
   watchFor: string;
   // Only where the generic name carries a stem in the stem list below.
   trick?: string;
@@ -34,7 +34,6 @@ const stems = {
   '-azolam': 'benzodiazepines',
   '-pidem': 'sleep medicines like zolpidem',
   '-lukast': 'leukotriene receptor antagonists',
-  '-terol': 'bronchodilators',
   '-coxib': 'selective COX inhibitors, a kind of NSAID',
 } as const;
 
@@ -112,7 +111,7 @@ export const drugCards: readonly DrugCard[] = [
     brand: 'Crestor',
     generic: 'rosuvastatin',
     drugClass: 'Statin (HMG-CoA reductase inhibitor)',
-    usedFor: 'High LDL cholesterol',
+    usedFor: 'High LDL cholesterol; lowering the risk of heart attack and stroke',
     watchFor: 'Headache, nausea, muscle pain (myalgia)',
     trick: trick('-vastatin'),
     source: label('Crestor', '325a5d0e-9a72-4015-9fcd-1655fb504cee'),
@@ -170,8 +169,8 @@ export const drugCards: readonly DrugCard[] = [
     id: 'drug-levothyroxine',
     brand: 'Synthroid',
     generic: 'levothyroxine',
-    drugClass: 'L-thyroxine (T4)',
-    usedFor: 'Hypothyroidism',
+    drugClass: 'Thyroid hormone (T4)',
+    usedFor: 'Hypothyroidism; TSH suppression in thyroid cancer',
     watchFor: 'Signs of too high a dose: arrhythmias, nervousness, insomnia',
     source: label('Synthroid', '1e11ad30-1041-4520-10b0-8f9d30d30fcc'),
   },
@@ -200,7 +199,7 @@ export const drugCards: readonly DrugCard[] = [
     brand: 'Zoloft',
     generic: 'sertraline',
     drugClass: 'Selective serotonin reuptake inhibitor (SSRI)',
-    usedFor: 'Major depressive disorder, OCD, panic disorder, PTSD',
+    usedFor: 'Major depressive disorder, OCD, panic disorder, PTSD, social anxiety disorder, PMDD',
     watchFor: 'Nausea, diarrhea, tremor',
     source: label('Zoloft', 'fda754f6-d0f3-4dce-a17a-927d64f912f7'),
   },
@@ -259,7 +258,6 @@ export const drugCards: readonly DrugCard[] = [
     drugClass: 'Beta2-adrenergic agonist',
     usedFor: 'Treating or preventing bronchospasm, including exercise-induced bronchospasm',
     watchFor: 'Throat irritation, viral respiratory infections, upper respiratory inflammation',
-    trick: trick('-terol'),
     source: label('Ventolin HFA', 'd92c5d6b-ff10-4087-36a2-1cfc464cb967'),
   },
   {

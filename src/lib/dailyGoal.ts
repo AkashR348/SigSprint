@@ -14,7 +14,7 @@ export function goalLine(status: 'loading' | 'unavailable' | 'ready', progress: 
   if (status === 'loading') return 'Loading your day';
   if (status === 'unavailable') return "Couldn't load your progress";
   if (progress === null) return 'No daily goal to show yet';
-  return `${progress.answered} of ${progress.goal} questions`;
+  return `${progress.answered} of ${progress.goal} done`;
 }
 
 /** What to tell someone whose save is unavailable; honest that answers will not be kept meanwhile. */

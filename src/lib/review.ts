@@ -17,17 +17,16 @@ export function nextGap(previous: number | undefined, rating: Rating): number {
   return Math.min(MAX_GAP, Math.max(FIRST_GAP[rating], (previous ?? 0) * GROWTH[rating]));
 }
 
-/** Progress after one card is rated on `today`. The rating counts toward the day and adds no points. */
+/** Progress after one card is rated on `today`. A card counts toward a day once, however often it is rated, and adds no points. */
 export function rateCard(progress: Progress, today: string, id: string, rating: Rating): Progress | null {
   if (!isDayKey(today) || id === '') return null;
-  const gap = nextGap(progress.cards?.[id]?.gap, rating);
+  const before = progress.cards?.[id];
+  const gap = nextGap(before?.gap, rating);
+  const cards = { ...progress.cards, [id]: { due: addDays(today, gap), gap, rated: today } };
+  if (before?.rated === today) return { ...progress, cards };
   const answered = answeredOn(progress.days, today) + 1;
   if (!Number.isSafeInteger(answered)) return null;
-  return {
-    ...progress,
-    days: { ...progress.days, [today]: answered },
-    cards: { ...progress.cards, [id]: { due: addDays(today, gap), gap } },
-  };
+  return { ...progress, days: { ...progress.days, [today]: answered }, cards };
 }
 
 type States = Readonly<Record<string, CardState>> | undefined;

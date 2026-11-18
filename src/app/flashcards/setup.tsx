@@ -7,10 +7,10 @@ import { ChunkyButton } from '@/components/ChunkyButton';
 import { IconButton } from '@/components/IconButton';
 import { Segmented } from '@/components/Segmented';
 import { drugCards } from '@/content/drugCards';
-import { flashcardRule, flashcardsNeedSave, readyLine, type Direction } from '@/lib/flashcardText';
+import { flashcardRule, flashcardsLoading, flashcardsNeedSave, readyLine, type Direction } from '@/lib/flashcardText';
 import { dayKey } from '@/lib/progress';
 import { getProgressState, subscribeProgress } from '@/lib/progressStore';
-import { countReady, daysBetween, nextDue, SESSION_LIMIT } from '@/lib/review';
+import { countReady, daysBetween, nextDue, sessionCards } from '@/lib/review';
 import { colors, fonts, space } from '@/theme/tokens';
 
 const ids = drugCards.map((c) => c.id);
@@ -21,14 +21,14 @@ export default function FlashcardSetupScreen() {
   const state = useSyncExternalStore(subscribeProgress, getProgressState, getProgressState);
 
   // Not loaded, can't load, and nothing due are three lines, never one.
-  let line = 'Loading your cards…';
+  let line = flashcardsLoading;
   let ready = 0;
   if (state.status === 'unavailable') line = flashcardsNeedSave;
   if (state.status === 'ready') {
     const today = dayKey(new Date());
     const { review, fresh } = countReady(ids, state.progress.cards, today);
     const due = nextDue(ids, state.progress.cards, today);
-    ready = Math.min(review + fresh, SESSION_LIMIT);
+    ready = sessionCards(drugCards, state.progress.cards, today).length;
     line = readyLine(review, fresh, ready, due === null ? null : daysBetween(today, due));
   }
 
@@ -40,7 +40,7 @@ export default function FlashcardSetupScreen() {
           <Text accessibilityRole="header" style={styles.title}>Flashcards</Text>
         </View>
         <Text style={styles.body}>
-          Top 200 drugs. See one name, say the other, then check the card and rate how well you knew it.
+          {drugCards.length} of the top 200 drugs so far. See one name, say the other, then check the card and rate how well you knew it.
         </Text>
         <View style={styles.row}>
           <Segmented

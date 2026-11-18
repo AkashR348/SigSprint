@@ -1,36 +1,43 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ChunkyButton } from '@/components/ChunkyButton';
 import { FlashcardRunner } from '@/components/FlashcardRunner';
-import { drugCards } from '@/content/drugCards';
-import { flashcardsBroken, toDirection } from '@/lib/flashcardText';
+import { drugCards, type DrugCard } from '@/content/drugCards';
+import { flashcardsBroken, flashcardsLoading, flashcardsNeedSave, toDirection } from '@/lib/flashcardText';
 import { dayKey } from '@/lib/progress';
-import { getProgressState } from '@/lib/progressStore';
+import { getProgressState, subscribeProgress } from '@/lib/progressStore';
 import { sessionCards } from '@/lib/review';
 import { colors, fonts, space } from '@/theme/tokens';
 
 export default function FlashcardRunScreen() {
   const router = useRouter();
   const direction = toDirection(useLocalSearchParams().direction);
-  // Drawn once, so rating a card never reshuffles the sitting.
-  const [cards] = useState(() => {
-    const state = getProgressState();
-    return state.status === 'ready' ? sessionCards(drugCards, state.progress.cards, dayKey(new Date())) : [];
-  });
-  const leave = () => router.dismissTo('/');
+  const state = useSyncExternalStore(subscribeProgress, getProgressState, getProgressState);
+  // Drawn when the save is first read, and only then, so rating a card never reshuffles the sitting.
+  const [cards, setCards] = useState<DrugCard[] | null>(null);
+  if (cards === null && state.status === 'ready') setCards(sessionCards(drugCards, state.progress.cards, dayKey(new Date())));
+
+  // Back to the tab the setup screen was opened from; a screen opened by a link has nothing under it.
+  const leave = () => (router.canDismiss() ? router.dismiss(2) : router.replace('/'));
+  const waiting = cards === null && state.status === 'loading';
+  const trouble = direction === null || cards?.length === 0 ? flashcardsBroken : cards === null ? flashcardsNeedSave : null;
 
   return (
     <SafeAreaView style={styles.screen}>
-      {direction === null || cards.length === 0 ? (
+      {waiting ? (
         <View style={styles.broken}>
-          <Text accessibilityRole="header" style={styles.text}>{flashcardsBroken}</Text>
+          <Text style={styles.text}>{flashcardsLoading}</Text>
+        </View>
+      ) : trouble !== null || cards === null || direction === null ? (
+        <View style={styles.broken}>
+          <Text accessibilityRole="header" style={styles.text}>{trouble}</Text>
           <ChunkyButton label="Back" onPress={() => router.dismissTo('/flashcards/setup')} />
         </View>
       ) : (
-        <FlashcardRunner cards={cards} direction={direction} onLeave={leave} />
+        <FlashcardRunner cards={cards} deck={drugCards} direction={direction} onLeave={leave} />
       )}
     </SafeAreaView>
   );

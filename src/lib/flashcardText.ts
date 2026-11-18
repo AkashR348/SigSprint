@@ -35,13 +35,20 @@ export function readyLine(review: number, fresh: number, sitting: number, nextIn
   return sitting < total ? `${ready} This sitting has ${sitting}.` : ready;
 }
 
-export const flashcardRule = "Every card you rate counts toward today's goal. Cards give no XP.";
+/** The deck's name on a tile. It says how many cards there are, since the top 200 are not all here yet. */
+export function deckLabel(cards: number): string {
+  return `Top drugs: ${cards} so far`;
+}
+
+export const flashcardRule = "Each card counts once a day toward today's goal. Cards give no XP.";
+export const flashcardsLoading = 'Loading your cards…';
 export const flashcardsBroken = "Flashcards couldn't be set up. Go back and try again.";
 export const flashcardsNeedSave = "Flashcards need your saved progress to plan reviews, and it can't be read right now.";
 export const cardUnsaved = "That rating couldn't be saved on this phone. Try again.";
 
-/** Said when a sitting ends. */
-export function doneLine(cards: number, nextIn: number | null): string {
+/** Said when a sitting ends. `ready` is how many cards in the whole deck can still be studied today. */
+export function doneLine(cards: number, ready: number, nextIn: number | null): string {
   const rated = `You went through ${plural(cards, 'card', 'cards')}.`;
+  if (ready > 0) return `${rated} ${ready === 1 ? '1 more card is' : `${ready} more cards are`} ready now.`;
   return nextIn === null ? rated : `${rated} Your next card is due ${inDays(nextIn)}.`;
 }
