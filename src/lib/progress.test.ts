@@ -36,9 +36,18 @@ test.each([
   ['a timestamp', '2026-11-17T09:00:00Z', 10],
   ['points that are not a number', '2026-11-17', Number.NaN],
   ['fractional points', '2026-11-17', 2.5],
-  ['negative points', '2026-11-17', -5],
 ])('an answer with %s is refused, not quietly counted', (_name, day, xp) => {
   expect(recordAnswer(freshProgress(), day, xp)).toBeNull();
+});
+
+test('a wrong answer takes points and still counts the day', () => {
+  const before = { ...freshProgress(), xp: 20 };
+  expect(recordAnswer(before, '2026-11-17', -5)).toEqual({ ...before, xp: 15, days: { '2026-11-17': 1 } });
+});
+
+test.each([[0, -5], [3, -5]])('a total of %i stops at 0 when an answer takes more', (xp, change) => {
+  const after = recordAnswer({ ...freshProgress(), xp }, '2026-11-17', change);
+  expect(after).toMatchObject({ xp: 0, days: { '2026-11-17': 1 } });
 });
 
 test('an answer that would push a total past exact integers is refused', () => {

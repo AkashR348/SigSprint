@@ -21,6 +21,11 @@ export const colors = {
   amber: '#B45309',
   blue: '#1D4ED8',
   pink: '#BE185D',
+  blueTint: '#E4ECFF',
+  blueOnTint: '#1E3A8A',
+  // A wrong answer; 4.5:1 on white and on its tint. Always paired with an icon and words.
+  red: '#B42318',
+  redTint: '#FDE7E4',
 } as const;
 
 export const fonts = {
@@ -31,6 +36,9 @@ export const fonts = {
 
 export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 28 } as const;
 export const radius = { md: 14, lg: 18, xl: 24, pill: 999 } as const;
+
+// Depth of a chunky control's bottom edge.
+export const edge = { tile: 4, button: 5 } as const;
 
 // Smallest tap target on either platform.
 export const minTouch = 48;
