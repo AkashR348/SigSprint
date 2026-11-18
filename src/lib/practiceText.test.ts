@@ -30,12 +30,11 @@ test('the leave question only promises what was saved', () => {
   expect(leaveNotice(2, true)).toBe(unsavedNotice(2));
 });
 
-test('points are drawn with a sign and spoken in words', () => {
+test('points are drawn with a sign and spoken with the same unit', () => {
   expect(pointsLabel(10)).toBe('+10 XP');
   expect(pointsLabel(-5)).toBe('\u22125 XP');
-  expect(pointsSpoken(10)).toBe('Plus 10 points');
-  expect(pointsSpoken(-5)).toBe('Minus 5 points');
-  expect(pointsSpoken(-1)).toBe('Minus 1 point');
+  expect(pointsSpoken(10)).toBe('Plus 10 XP');
+  expect(pointsSpoken(-5)).toBe('Minus 5 XP');
 });
 
 test('a test says what it did to the total, in words', () => {

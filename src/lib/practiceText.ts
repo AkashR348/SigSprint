@@ -27,7 +27,7 @@ export function pointsLabel(change: number): string {
 }
 
 export function pointsSpoken(change: number): string {
-  return `${change > 0 ? 'Plus' : 'Minus'} ${plural(Math.abs(change), 'point', 'points')}`;
+  return `${change > 0 ? 'Plus' : 'Minus'} ${Math.abs(change)} XP`;
 }
 
 /** What a whole test did to the total, from the answers that were saved. */

@@ -82,7 +82,7 @@ test('a wrong answer takes 5 points, and says so once it is saved', async () => 
   await press('Continue');
   await choose(/two a/);
   await press('Check');
-  expect(await screen.findByLabelText('Minus 5 points')).toHaveTextContent('\u22125 XP');
+  expect(await screen.findByLabelText('Minus 5 XP')).toHaveTextContent('\u22125 XP');
   expect(await stored()).toMatchObject({ xp: 5, days: { [dayKey(new Date())]: 2 } });
 });
 
@@ -128,8 +128,19 @@ test('with answers at the end the results show the points for the test and for e
   await choose(/two a/);
   await press('Finish');
   expect(await screen.findByText('You gained 5 points')).toBeTruthy();
-  expect(screen.getByLabelText('Plus 10 points')).toHaveTextContent('+10 XP');
-  expect(screen.getByLabelText('Minus 5 points')).toHaveTextContent('\u22125 XP');
+  expect(screen.getByLabelText('Plus 10 XP')).toHaveTextContent('+10 XP');
+  expect(screen.getByLabelText('Minus 5 XP')).toHaveTextContent('\u22125 XP');
+});
+
+test('when no answer could be saved the results claim nothing about points', async () => {
+  jest.mocked(AsyncStorage.setItem).mockRejectedValueOnce(new Error('full')).mockRejectedValueOnce(new Error('full'));
+  await start({ timed: false, showAnswers: 'end' });
+  await choose(/one a/);
+  await press('Next');
+  await choose(/two a/);
+  await press('Finish');
+  expect(await screen.findByText(/2 answers couldn't be saved/)).toBeTruthy();
+  expect(screen.queryByText(/Your points|You gained|You lost|XP/)).toBeNull();
 });
 
 test('a wrong answer at a total of 0 changes nothing, and the results say so', async () => {
