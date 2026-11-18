@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { ComponentProps } from 'react';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { colors, fonts, space } from '@/theme/tokens';
 import React from 'react';
@@ -13,33 +13,44 @@ type Props = {
   onPress: () => void;
 };
 
+const EDGE = 4;
+
 export function ModeTile({ title, detail, icon, iconColor, onPress }: Props) {
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={`${title}. ${detail}`}
       onPress={onPress}
-      style={({ pressed }) => [styles.tile, pressed && styles.pressed]}>
-      <Ionicons name={icon} size={26} color={iconColor} />
-      <Text style={styles.title}>{title}</Text>
-      <Text style={styles.detail}>{detail}</Text>
+      style={styles.box}>
+      {({ pressed }) => (
+        // The face slides onto its edge; the outer box keeps its size so the row never moves.
+        <>
+          <View style={styles.edge} />
+          <View style={[styles.face, pressed && styles.pressed]}>
+            <Ionicons name={icon} size={26} color={iconColor} />
+            <Text style={styles.title}>{title}</Text>
+            <Text style={styles.detail}>{detail}</Text>
+          </View>
+        </>
+      )}
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  tile: {
+  box: { flex: 1, paddingBottom: EDGE },
+  edge: { position: 'absolute', top: EDGE, bottom: 0, left: 0, right: 0, borderRadius: radius.lg, backgroundColor: colors.borderStrong },
+  face: {
     flex: 1,
-    minHeight: 104,
-    borderRadius: 20,
+    minHeight: 100,
+    borderRadius: radius.lg,
     borderWidth: 2,
-    borderBottomWidth: 6,
-    borderColor: colors.border,
+    borderColor: colors.borderStrong,
     backgroundColor: colors.surface,
-    padding: 14,
+    padding: space.lg,
     gap: space.xs,
   },
-  pressed: { borderBottomWidth: 2, marginTop: 4 },
+  pressed: { transform: [{ translateY: EDGE }] },
   title: { fontFamily: fonts.black, fontSize: 16, color: colors.ink, marginTop: space.xs },
   detail: { fontFamily: fonts.bold, fontSize: 13, color: colors.muted },
 });

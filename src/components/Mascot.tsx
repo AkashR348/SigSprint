@@ -3,14 +3,14 @@ import { StyleSheet, View } from 'react-native';
 import { colors } from '@/theme/tokens';
 import React from 'react';
 
-/** The capsule mascot, drawn with views so it needs no image or SVG library. */
+/** The capsule mascot, drawn with views. Decorative, so screen readers skip it. */
 export function Mascot({ size = 84 }: { size?: number }) {
   const width = size * 0.52;
   const eye = size * 0.09;
   return (
     <View
-      accessibilityRole="image"
-      accessibilityLabel="Capsule mascot"
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
       style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
       <View style={[styles.capsule, { width, height: size * 0.82, borderRadius: width / 2 }]}>
         <View style={styles.top}>
