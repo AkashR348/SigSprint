@@ -46,7 +46,7 @@ test('the boxed warnings deck counts its own cards, hides the name direction, an
   expect(screen.getByText('Nothing is due today. Your next card is due in 3 days.')).toBeTruthy();
   await fireEvent.press(screen.getByRole('radio', { name: 'Deck, Boxed warnings' }));
   expect(screen.getByText(`${boxedWarnings.length} cards ready: ${boxedWarnings.length} new.`)).toBeTruthy();
-  expect(screen.getByText(/whose FDA label has a boxed warning/)).toBeTruthy();
+  expect(screen.getByText(/whose FDA label has a boxed warning, or opens with a warning\./)).toBeTruthy();
   expect(screen.queryByRole('radio', { name: 'Show me, Brand name' })).toBeNull();
   expect(screen.getByText(/^13 drugs in the deck/)).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Start' }));

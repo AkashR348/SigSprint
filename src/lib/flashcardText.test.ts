@@ -55,7 +55,7 @@ test('a sitting size is 10, 20 or no limit, and anything else is not one', () =>
 test('a deck is drug names or boxed warnings, and each says what it holds', () => {
   expect([toDeck('drugs'), toDeck('boxed'), toDeck('all'), toDeck(undefined)]).toEqual(['drugs', 'boxed', null, null]);
   expect(deckIntro('drugs', 24)).toMatch(/^24 of the top 200 drugs so far\./);
-  expect(deckIntro('boxed', 12)).toMatch(/^12 drugs in the deck whose FDA label has a boxed warning\./);
+  expect(deckIntro('boxed', 12)).toMatch(/^12 drugs in the deck whose FDA label has a boxed warning, or opens with a warning\./);
   expect(sittingTitle('drugs', 'generic')).toBe('Top drugs · Generic to brand');
   expect(sittingTitle('boxed', 'generic')).toBe('Boxed warnings');
 });

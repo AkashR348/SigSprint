@@ -1,7 +1,7 @@
 import { drugCards } from './drugCards';
 import type { Source } from './questions';
 
-// One card for each drug in the deck whose FDA label carries a boxed warning in its Highlights.
+// One card for each drug in the deck whose FDA label carries a boxed warning, plus furosemide.
 // `heading` is the label's own heading, shortened; `detail` is the warning under it, shortened.
 // `note` is shown on the card where the label's record does not code the warning as boxed.
 export type BoxedWarning = {

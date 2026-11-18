@@ -19,7 +19,7 @@ export function toDeck(value: unknown): Deck | null {
 /** What the setup screen says about a deck of `cards` cards. */
 export function deckIntro(deck: Deck, cards: number): string {
   if (deck === 'boxed') {
-    return `${plural(cards, 'drug', 'drugs')} in the deck whose FDA label has a boxed warning. See the drug, say the warning, then check the card and rate how well you knew it.`;
+    return `${plural(cards, 'drug', 'drugs')} in the deck whose FDA label has a boxed warning, or opens with a warning. See the drug, say the warning, then check the card and rate how well you knew it.`;
   }
   return `${cards} of the top 200 drugs so far. See one name, say the other, then check the card and rate how well you knew it.`;
 }
