@@ -19,6 +19,15 @@ export function unsavedNotice(count: number): string {
   return `${plural(count, 'answer', 'answers')} couldn't be saved on this phone, so ${count === 1 ? "it isn't" : "they aren't"} in your streak, points or daily goal.`;
 }
 
+/** The points an answer moved the total by, as drawn on the answer sheet. */
+export function pointsLabel(change: number): string {
+  return `${change > 0 ? '+' : '\u2212'}${Math.abs(change)} XP`;
+}
+
+export function pointsSpoken(change: number): string {
+  return `${change > 0 ? 'Plus' : 'Minus'} ${plural(Math.abs(change), 'point', 'points')}`;
+}
+
 export const savingNotice = 'Saving your last answer…';
 export const answerUnsaved = "This answer couldn't be saved on this phone.";
 

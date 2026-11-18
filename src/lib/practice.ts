@@ -18,11 +18,12 @@ export const defaultConfig: TestConfig = {
   showAnswers: 'each',
 };
 
-// Points for a correct answer. A wrong one earns none, and still counts toward the daily goal.
+// Points a correct answer adds and a wrong one takes. Both count toward the daily goal.
 export const XP_PER_CORRECT = 10;
+export const XP_PER_WRONG = 5;
 
 export function xpFor(question: Question, choice: number): number {
-  return choice === question.answer ? XP_PER_CORRECT : 0;
+  return choice === question.answer ? XP_PER_CORRECT : -XP_PER_WRONG;
 }
 
 /** How many questions the pool holds for the chosen topics. */

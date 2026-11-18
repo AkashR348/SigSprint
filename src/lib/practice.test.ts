@@ -11,6 +11,7 @@ import {
   timeLimitSeconds,
   toParams,
   XP_PER_CORRECT,
+  XP_PER_WRONG,
   xpFor,
   type TestConfig,
 } from './practice';
@@ -114,10 +115,11 @@ describe('route params', () => {
   });
 });
 
-test('a correct answer earns points and a wrong one earns none', () => {
+test('a correct answer adds 10 points and a wrong one takes 5', () => {
   const question = { answer: 2 } as Question;
-  expect(xpFor(question, 2)).toBe(XP_PER_CORRECT);
-  expect(xpFor(question, 1)).toBe(0);
+  expect([XP_PER_CORRECT, XP_PER_WRONG]).toEqual([10, 5]);
+  expect(xpFor(question, 2)).toBe(10);
+  expect(xpFor(question, 1)).toBe(-5);
 });
 
 test('available questions are counted for the chosen topics only', () => {

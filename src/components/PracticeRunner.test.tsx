@@ -63,7 +63,7 @@ test('a correct answer shows why, its source, and the points once they are saved
   expect(await stored()).toMatchObject({ xp: 10, days: { [dayKey(new Date())]: 1 } });
 });
 
-test('a wrong answer names the right one, earns no points, and still counts toward today', async () => {
+test('a wrong answer names the right one and still counts toward today, and a total of 0 stays at 0', async () => {
   await start({ timed: false, showAnswers: 'each' });
   await choose(/one c/);
   await press('Check');
@@ -72,7 +72,18 @@ test('a wrong answer names the right one, earns no points, and still counts towa
   expect(screen.getByRole('radio', { name: 'A. one a, correct answer' })).toBeTruthy();
   expect(screen.getByRole('radio', { name: 'C. one c, your answer, incorrect' })).toBeDisabled();
   await waitFor(async () => expect(await stored()).toMatchObject({ xp: 0, days: { [dayKey(new Date())]: 1 } }));
-  expect(screen.queryByText('+10 XP')).toBeNull();
+  expect(screen.queryByText(/XP/)).toBeNull();
+});
+
+test('a wrong answer takes 5 points, and says so once it is saved', async () => {
+  await start({ timed: false, showAnswers: 'each' });
+  await choose(/one a/);
+  await press('Check');
+  await press('Continue');
+  await choose(/two a/);
+  await press('Check');
+  expect(await screen.findByLabelText('Minus 5 points')).toHaveTextContent('\u22125 XP');
+  expect(await stored()).toMatchObject({ xp: 5, days: { [dayKey(new Date())]: 2 } });
 });
 
 test('an answer that cannot be saved says so and is counted on the results, not hidden', async () => {

@@ -8,8 +8,8 @@ import { PracticeResults } from '@/components/PracticeResults';
 import { SourceLink } from '@/components/SourceLink';
 import { domainName } from '@/content/domains';
 import type { Question } from '@/content/questions';
-import { timeLimitSeconds, XP_PER_CORRECT, xpFor, type TestConfig } from '@/lib/practice';
-import { answerUnsaved, leaveNotice } from '@/lib/practiceText';
+import { timeLimitSeconds, xpFor, type TestConfig } from '@/lib/practice';
+import { answerUnsaved, leaveNotice, pointsLabel, pointsSpoken } from '@/lib/practiceText';
 import { clock, clockSpoken, finish, next, pick, startRun, submit } from '@/lib/practiceRun';
 import { dayKey, recordAnswer } from '@/lib/progress';
 import { updateProgress } from '@/lib/progressStore';
@@ -23,7 +23,8 @@ type Props = {
   onNewTest: () => void;
 };
 
-type Saved = 'saving' | 'saved' | 'failed';
+// Once saved, the points the total really moved by: a loss stops at a total of 0.
+type Saved = 'saving' | 'failed' | { change: number };
 const LETTERS = ['A', 'B', 'C', 'D'];
 
 /** Runs one practice test from the first question to the results. */
@@ -142,8 +143,13 @@ export function PracticeRunner({ questions, config, onLeave, onNewTest }: Props)
     setRun(after);
     setSaves((s) => ({ ...s, [at]: 'saving' }));
     // Every locked answer counts toward today, right or wrong.
-    void updateProgress((p) => recordAnswer(p, day, xp)).then((ok) => {
-      setSaves((s) => ({ ...s, [at]: ok ? 'saved' : 'failed' }));
+    let change = 0;
+    void updateProgress((p) => {
+      const after = recordAnswer(p, day, xp);
+      if (after) change = after.xp - p.xp;
+      return after;
+    }).then((ok) => {
+      setSaves((s) => ({ ...s, [at]: ok ? { change } : 'failed' }));
     });
   };
 
@@ -151,6 +157,7 @@ export function PracticeRunner({ questions, config, onLeave, onNewTest }: Props)
   const isLast = run.index === total - 1;
   const domain = domainName(question.domain);
   const saved = saves[run.index];
+  const change = typeof saved === 'object' ? saved.change : 0;
 
   return (
     <View style={styles.screen}>
@@ -227,7 +234,11 @@ export function PracticeRunner({ questions, config, onLeave, onNewTest }: Props)
               {right ? 'Correct!' : 'Not quite'}
             </Text>
             {/* Points show only once the answer is on the phone. */}
-            {right && saved === 'saved' && <Text style={styles.xp}>+{XP_PER_CORRECT} XP</Text>}
+            {change !== 0 && (
+              <Text accessibilityLabel={pointsSpoken(change)} style={styles.xp}>
+                {pointsLabel(change)}
+              </Text>
+            )}
           </View>
           {!right && <Text style={styles.body}>The answer is {question.choices[question.answer]}.</Text>}
           <Text style={styles.body}>{question.explanation}</Text>

@@ -61,10 +61,11 @@ export function streakDays(days: Record<string, number>, today: string): number 
   return streak;
 }
 
-/** Progress after one answer worth `xp` points on `today`, or null if the day or points are unsound. */
+/** Progress after one answer on `today` that adds or takes `xp` points, or null if either is unsound. */
 export function recordAnswer(progress: Progress, today: string, xp: number): Progress | null {
-  if (!isDayKey(today) || !isCount(xp)) return null;
-  const total = progress.xp + xp;
+  if (!isDayKey(today) || !Number.isSafeInteger(xp)) return null;
+  // A wrong answer takes points, but the total stops at 0.
+  const total = Math.max(0, progress.xp + xp);
   const answered = answeredOn(progress.days, today) + 1;
   if (!isCount(total) || !isCount(answered)) return null;
   return { ...progress, xp: total, days: { ...progress.days, [today]: answered } };

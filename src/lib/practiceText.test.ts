@@ -1,4 +1,4 @@
-import { leaveNotice, scoreLine, setupSummary, shortNotice, unsavedNotice } from './practiceText';
+import { leaveNotice, pointsLabel, pointsSpoken, scoreLine, setupSummary, shortNotice, unsavedNotice } from './practiceText';
 
 test('the summary names questions, topics and time, with singulars', () => {
   expect(setupSummary(10, 3, 13)).toBe('10 questions · 3 topics · 13 minutes');
@@ -28,4 +28,12 @@ test('the leave question only promises what was saved', () => {
   expect(leaveNotice(0, false)).toBe('The questions you have answered still count toward today.');
   expect(leaveNotice(0, true)).toBe('Your last answer is still being saved.');
   expect(leaveNotice(2, true)).toBe(unsavedNotice(2));
+});
+
+test('points are drawn with a sign and spoken in words', () => {
+  expect(pointsLabel(10)).toBe('+10 XP');
+  expect(pointsLabel(-5)).toBe('\u22125 XP');
+  expect(pointsSpoken(10)).toBe('Plus 10 points');
+  expect(pointsSpoken(-5)).toBe('Minus 5 points');
+  expect(pointsSpoken(-1)).toBe('Minus 1 point');
 });
