@@ -1,4 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Stack } from 'expo-router/stack';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,6 +19,8 @@ export default function PracticeRunScreen() {
 
   return (
     <SafeAreaView style={styles.screen}>
+      {/* No swipe back: leaving a test goes through the question the close button asks. */}
+      <Stack.Screen options={{ gestureEnabled: false }} />
       {config === null || questions.length === 0 ? (
         <View style={styles.broken}>
           <Text accessibilityRole="header" style={styles.text}>{setupBroken}</Text>

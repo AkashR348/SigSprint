@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { BackHandler } from 'react-native';
 
 import type { Question } from '@/content/questions';
 import { dayKey } from '@/lib/progress';
@@ -140,4 +141,47 @@ test('the results offer a new test and a way out', async () => {
   expect(onNewTest).toHaveBeenCalledTimes(1);
   await press('Done');
   expect(onLeave).toHaveBeenCalledTimes(1);
+});
+
+test('an answer after the time has ended is not taken, even before the clock ticks', async () => {
+  await start({ timed: true, showAnswers: 'end' });
+  await choose(/one a/);
+  const now = Date.now();
+  const clockNow = jest.spyOn(Date, 'now').mockReturnValue(now + 200_000);
+  await press('Next');
+  clockNow.mockRestore();
+  expect(screen.getByText("Time's up")).toBeTruthy();
+  expect(screen.getByText('2 not answered')).toBeTruthy();
+  expect(AsyncStorage.setItem).not.toHaveBeenCalled();
+});
+
+test("Android's back button asks before leaving", async () => {
+  const listen = jest.spyOn(BackHandler, 'addEventListener');
+  await start({ timed: false, showAnswers: 'each' });
+  const onBack = listen.mock.calls[listen.mock.calls.length - 1][1] as unknown as () => boolean;
+  let handled: boolean | null | undefined;
+  await act(async () => {
+    handled = onBack();
+  });
+  expect(handled).toBe(true);
+  expect(screen.getByText('Leave this test?')).toBeTruthy();
+  expect(onLeave).not.toHaveBeenCalled();
+});
+
+test('an answer saved after midnight still counts for the day it was given', async () => {
+  let finishRead: (raw: string | null) => void = () => {};
+  resetProgressStoreForTests();
+  jest.mocked(AsyncStorage.getItem).mockReturnValueOnce(new Promise((resolve) => (finishRead = resolve)));
+  void loadProgress();
+  jest.useFakeTimers({ now: new Date(2026, 10, 17, 23, 59, 58) });
+  await start({ timed: false, showAnswers: 'each' });
+  await choose(/one a/);
+  await press('Check');
+  jest.setSystemTime(new Date(2026, 10, 18, 0, 0, 5));
+  await act(async () => {
+    finishRead(null);
+  });
+  jest.useRealTimers();
+  await waitFor(async () => expect(await stored()).toMatchObject({ days: { '2026-11-17': 1 } }));
+  expect((await stored())?.days['2026-11-18']).toBeUndefined();
 });

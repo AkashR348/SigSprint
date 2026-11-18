@@ -127,3 +127,10 @@ test('available questions are counted for the chosen topics only', () => {
   expect(availableCount(pool, ['medications', 'federal'])).toBe(3);
   expect(availableCount(pool, [])).toBe(0);
 });
+
+test('a topic listed twice does not put a question in the test twice', () => {
+  const pool = make('medications', 6);
+  const picked = pickQuestions(pool, { domains: ['medications', 'medications'], count: 10, timed: false, showAnswers: 'each' }, () => 0.5);
+  expect(picked.questions).toHaveLength(6);
+  expect(new Set(picked.questions.map((q) => q.id)).size).toBe(6);
+});

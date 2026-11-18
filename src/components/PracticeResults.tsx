@@ -14,6 +14,8 @@ type Props = {
   answers: Answers;
   // Answers that could not be written to progress; never folded into the score.
   unsaved: number;
+  // An answer is still being written; it is not yet known to be saved.
+  saving: boolean;
   timedOut: boolean;
   onNewTest: () => void;
   onDone: () => void;
@@ -21,7 +23,7 @@ type Props = {
 
 const nameOf = (id: string) => domains.find((d) => d.id === id)?.name ?? id;
 
-export function PracticeResults({ questions, answers, unsaved, timedOut, onNewTest, onDone }: Props) {
+export function PracticeResults({ questions, answers, unsaved, saving, timedOut, onNewTest, onDone }: Props) {
   const result = scoreTest(questions, answers);
   return (
     <ScrollView contentContainerStyle={styles.content}>
@@ -33,6 +35,7 @@ export function PracticeResults({ questions, answers, unsaved, timedOut, onNewTe
         {result.unanswered > 0 && <Text style={styles.scoreNote}>{result.unanswered} not answered</Text>}
       </View>
 
+      {saving && <Text style={styles.notice}>Saving your last answer…</Text>}
       {unsaved > 0 && <Text style={styles.notice}>{unsavedNotice(unsaved)}</Text>}
 
       <View style={styles.group}>

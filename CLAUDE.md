@@ -2,7 +2,8 @@
 
 SigSprint is a free iOS and Android study app for the PTCB's PTCE exam, built with Expo and
 TypeScript. It has no accounts: progress lives on the phone. Questions come from a pre-generated,
-source-checked bank served by a small Supabase backend. `AGENTS.md` holds Expo's own rules for
+source-checked bank served by a small Supabase backend; until that exists, a starter set ships in
+the app (`src/content/starterQuestions.ts`). `AGENTS.md` holds Expo's own rules for
 this SDK; read it before touching an Expo or React Native API.
 
 ## How to edit this file

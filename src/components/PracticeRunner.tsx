@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { type ComponentRef, useEffect, useRef, useState } from 'react';
-import { AccessibilityInfo, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, BackHandler, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ChunkyButton } from '@/components/ChunkyButton';
 import { IconButton } from '@/components/IconButton';
@@ -33,6 +33,10 @@ export function PracticeRunner({ questions, config, onLeave, onNewTest }: Props)
   const [timedOut, setTimedOut] = useState(false);
   const limit = timeLimitSeconds(questions.length);
   const [left, setLeft] = useState(limit);
+  // When the timer ends, in ms; null while there is none.
+  const endsAt = useRef<number | null>(null);
+  // Questions already sent to progress, so a double tap cannot count one answer twice.
+  const recorded = useRef(new Set<number>());
   const verdict = useRef<ComponentRef<typeof Text>>(null);
   const stem = useRef<ComponentRef<typeof Text>>(null);
 
@@ -41,6 +45,7 @@ export function PracticeRunner({ questions, config, onLeave, onNewTest }: Props)
   useEffect(() => {
     if (!timing) return;
     const end = Date.now() + limit * 1000;
+    endsAt.current = end;
     const tick = () => {
       const seconds = (end - Date.now()) / 1000;
       setLeft(seconds);
@@ -50,8 +55,22 @@ export function PracticeRunner({ questions, config, onLeave, onNewTest }: Props)
       }
     };
     const timer = setInterval(tick, 500);
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timer);
+      endsAt.current = null;
+    };
   }, [timing, limit]);
+
+  const active = !run.done;
+  // Android's back button asks before leaving, like the close button.
+  useEffect(() => {
+    if (!active) return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      setLeaving(true);
+      return true;
+    });
+    return () => sub.remove();
+  }, [active]);
 
   const lastMinute = timing && left <= 60;
   useEffect(() => {
@@ -82,6 +101,7 @@ export function PracticeRunner({ questions, config, onLeave, onNewTest }: Props)
         questions={run.questions}
         answers={run.answers}
         unsaved={Object.values(saves).filter((s) => s === 'failed').length}
+        saving={Object.values(saves).some((s) => s === 'saving')}
         timedOut={timedOut}
         onNewTest={onNewTest}
         onDone={onLeave}
@@ -90,14 +110,23 @@ export function PracticeRunner({ questions, config, onLeave, onNewTest }: Props)
   }
 
   const lock = () => {
+    // The clock ticks twice a second; an answer between the end and the next tick is too late.
+    if (endsAt.current !== null && Date.now() >= endsAt.current) {
+      setTimedOut(true);
+      setRun(finish);
+      return;
+    }
     const after = submit(run);
-    if (after === run || run.picked === null) return;
     const at = run.index;
+    if (after === run || run.picked === null || recorded.current.has(at)) return;
+    recorded.current.add(at);
     const xp = xpFor(question, run.picked);
+    // The day it was answered, even if the save lands after midnight.
+    const day = dayKey(new Date());
     setRun(after);
     setSaves((s) => ({ ...s, [at]: 'saving' }));
     // Every locked answer counts toward today, right or wrong.
-    void updateProgress((p) => recordAnswer(p, dayKey(new Date()), xp)).then((ok) => {
+    void updateProgress((p) => recordAnswer(p, day, xp)).then((ok) => {
       setSaves((s) => ({ ...s, [at]: ok ? 'saved' : 'failed' }));
     });
   };
