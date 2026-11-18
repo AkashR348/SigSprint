@@ -4,7 +4,6 @@ import { Tabs } from 'expo-router/js-tabs';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import type { ComponentProps } from 'react';
-import { useEffect } from 'react';
 import { Platform, StyleSheet, Text, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
