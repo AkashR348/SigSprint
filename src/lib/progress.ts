@@ -1,5 +1,12 @@
 // What the phone remembers. `days` maps a local date (YYYY-MM-DD) to questions answered that day.
-export type Progress = { version: 1; dailyGoal: number; xp: number; days: Record<string, number> };
+// `handledBackups` lists backups already recovered or set aside, so none is offered or counted twice.
+export type Progress = {
+  version: 1;
+  dailyGoal: number;
+  xp: number;
+  days: Record<string, number>;
+  handledBackups?: string[];
+};
 
 export const DEFAULT_DAILY_GOAL = 20;
 
@@ -30,7 +37,52 @@ export function parseProgress(value: unknown): Progress | null {
     if (!isDayKey(key) || !isCount(count)) return null;
     days[key] = count;
   }
-  return { version: 1, dailyGoal: v.dailyGoal, xp: v.xp, days };
+  const progress: Progress = { version: 1, dailyGoal: v.dailyGoal, xp: v.xp, days };
+  if (v.handledBackups !== undefined) {
+    if (!Array.isArray(v.handledBackups) || !v.handledBackups.every((k) => typeof k === 'string')) return null;
+    progress.handledBackups = [...v.handledBackups];
+  }
+  return progress;
+}
+
+// What could be trusted in a damaged save. `xp` is null when the points were unreadable, not zero.
+export type Salvage = { days: Record<string, number>; answers: number; xp: number | null };
+
+/** The sound parts of a damaged save, or null when no part of it can be trusted. */
+export function salvageProgress(value: unknown): Salvage | null {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return null;
+  const v = value as Record<string, unknown>;
+  const days: Record<string, number> = {};
+  let answers = 0;
+  if (typeof v.days === 'object' && v.days !== null && !Array.isArray(v.days)) {
+    for (const [key, count] of Object.entries(v.days)) {
+      if (!isDayKey(key) || !isCount(count) || count === 0 || !isCount(answers + count)) continue;
+      days[key] = count;
+      answers += count;
+    }
+  }
+  const xp = isCount(v.xp) ? v.xp : null;
+  if (answers === 0 && (xp === null || xp === 0)) return null;
+  return { days, answers, xp };
+}
+
+/** The handled-backup keys still readable in a damaged save, so starting fresh does not forget them. */
+export function salvageHandled(value: unknown): string[] {
+  if (typeof value !== 'object' || value === null) return [];
+  const list = (value as Record<string, unknown>).handledBackups;
+  return Array.isArray(list) ? list.filter((k): k is string => typeof k === 'string') : [];
+}
+
+/** Current progress with a backup's sound parts added in, and every key in `backupKeys` marked handled. */
+export function mergeRecovered(progress: Progress, found: Salvage | null, backupKeys: readonly string[]): Progress | null {
+  const days = { ...progress.days };
+  let xp = progress.xp;
+  if (found !== null) {
+    for (const [key, count] of Object.entries(found.days)) days[key] = answeredOn(days, key) + count;
+    xp += found.xp ?? 0;
+  }
+  const handled = [...new Set([...(progress.handledBackups ?? []), ...backupKeys])];
+  return parseProgress({ ...progress, xp, days, handledBackups: handled });
 }
 
 /** The phone's local calendar day, so a streak turns over at the user's midnight. */

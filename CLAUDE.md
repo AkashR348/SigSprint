@@ -38,7 +38,7 @@ this SDK; read it before touching an Expo or React Native API.
    state is `ready`, so a damaged save is never overwritten. A change shows on screen only after it
    is saved. A damaged save is replaced only by `startFresh`, and only once a copy of it is on the
    phone; `progressStore.test.ts` asserts each. The screen asks before calling it, and waits while
-   it runs; `SaveNotice.test.tsx` asserts that.
+   it runs; `SaveNotice.test.tsx` asserts that. Recovering a backup is in `docs/saved-progress.md`.
 
 ## Layout
 
