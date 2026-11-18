@@ -1,4 +1,4 @@
-import { dayKey, freshProgress, parseProgress, recordAnswer, streakDays } from './progress';
+import { dayKey, freshProgress, mergeRecovered, parseProgress, recordAnswer, salvageHandled, salvageProgress, streakDays } from './progress';
 
 test('a day key is the local calendar date', () => {
   expect(dayKey(new Date(2026, 0, 5, 23, 59))).toBe('2026-01-05');
@@ -69,4 +69,57 @@ test('a streak survives until the end of the next day, then breaks', () => {
 test('a day with zero answers does not extend a streak', () => {
   expect(streakDays({ '2026-11-16': 0, '2026-11-17': 1 }, '2026-11-17')).toBe(1);
   expect(streakDays({}, '2026-11-17')).toBe(0);
+});
+
+test('a save that lists handled backups round-trips, and a bad list is damage', () => {
+  const saved = { ...freshProgress(), handledBackups: ['sigsprint.progress.backup.1'] };
+  expect(parseProgress(JSON.parse(JSON.stringify(saved)))).toEqual(saved);
+  expect(parseProgress({ ...freshProgress(), handledBackups: [1] })).toBeNull();
+  expect(parseProgress({ ...freshProgress(), handledBackups: 'x' })).toBeNull();
+});
+
+test('salvage keeps the sound days and says the points were unreadable', () => {
+  const damaged = { version: 1, dailyGoal: 20, xp: -4, days: { '2026-11-16': 12, '2026-02-30': 9, '2026-11-17': 1.5, nope: 3 } };
+  expect(salvageProgress(damaged)).toEqual({ days: { '2026-11-16': 12 }, answers: 12, xp: null });
+});
+
+test('salvage keeps sound points when the days are gone', () => {
+  expect(salvageProgress({ xp: 130, days: 'lost' })).toEqual({ days: {}, answers: 0, xp: 130 });
+});
+
+test.each([['text', 'oops'], ['a list', [1, 2]], ['nothing sound', { xp: 'many', days: { nope: 1 } }], ['only zeros', { xp: 0, days: { '2026-11-16': 0 } }]])(
+  'salvage finds nothing in %s',
+  (_name, value) => {
+    expect(salvageProgress(value)).toBeNull();
+  },
+);
+
+test('recovered answers and points are added to what is there now, and the backup is marked handled', () => {
+  const now = { ...freshProgress(), xp: 20, days: { '2026-11-17': 2 } };
+  const found = { days: { '2026-11-16': 12, '2026-11-17': 3 }, answers: 15, xp: 130 };
+  expect(mergeRecovered(now, found, ['b1'])).toEqual({
+    version: 1, dailyGoal: 20, xp: 150, days: { '2026-11-16': 12, '2026-11-17': 5 }, handledBackups: ['b1'],
+  });
+});
+
+test('unreadable points add nothing, and setting a backup aside changes only the handled list', () => {
+  const now = { ...freshProgress(), xp: 20, days: { '2026-11-17': 2 } };
+  expect(mergeRecovered(now, { days: { '2026-11-16': 1 }, answers: 1, xp: null }, ['b1'])?.xp).toBe(20);
+  expect(mergeRecovered(now, null, ['b1'])).toEqual({ ...now, handledBackups: ['b1'] });
+});
+
+test('a merge that would pass exact integers is refused', () => {
+  const full = { ...freshProgress(), xp: Number.MAX_SAFE_INTEGER };
+  expect(mergeRecovered(full, { days: {}, answers: 0, xp: 1 }, ['b1'])).toBeNull();
+});
+
+test('several keys are marked handled in one merge, each listed once', () => {
+  const now = { ...freshProgress(), handledBackups: ['b0'] };
+  expect(mergeRecovered(now, null, ['b1', 'b0', 'b2'])?.handledBackups).toEqual(['b0', 'b1', 'b2']);
+});
+
+test('handled keys are salvaged from a damaged save, and only the strings', () => {
+  expect(salvageHandled({ xp: 'bad', handledBackups: ['b1', 7, null, 'b2'] })).toEqual(['b1', 'b2']);
+  expect(salvageHandled({ handledBackups: 'b1' })).toEqual([]);
+  expect(salvageHandled(null)).toEqual([]);
 });
