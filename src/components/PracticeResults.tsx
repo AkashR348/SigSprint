@@ -1,12 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { type ComponentRef, useEffect, useRef } from 'react';
+import { AccessibilityInfo, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ChunkyButton } from '@/components/ChunkyButton';
 import { SourceLink } from '@/components/SourceLink';
-import { domains } from '@/content/domains';
+import { domainName } from '@/content/domains';
 import type { Question } from '@/content/questions';
 import { scoreTest, type Answers } from '@/lib/practice';
-import { scoreLine, unsavedNotice } from '@/lib/practiceText';
+import { savingNotice, scoreLine, unsavedNotice } from '@/lib/practiceText';
+import { useAnnounce } from '@/lib/useAnnounce';
 import { colors, fonts, radius, space } from '@/theme/tokens';
 
 type Props = {
@@ -21,13 +23,25 @@ type Props = {
   onDone: () => void;
 };
 
-const nameOf = (id: string) => domains.find((d) => d.id === id)?.name ?? id;
-
 export function PracticeResults({ questions, answers, unsaved, saving, timedOut, onNewTest, onDone }: Props) {
   const result = scoreTest(questions, answers);
+  const heading = timedOut ? "Time's up" : 'Test complete';
+  const opening = `${heading}. ${scoreLine(result.correct, result.total)}.`;
+  const title = useRef<ComponentRef<typeof Text>>(null);
+  const status = saving ? savingNotice : unsaved > 0 ? unsavedNotice(unsaved) : null;
+
+  // The results replace the question that had focus, sometimes with no tap at all.
+  useEffect(() => {
+    AccessibilityInfo.announceForAccessibility(opening);
+    if (Platform.OS !== 'web' && title.current) AccessibilityInfo.sendAccessibilityEvent(title.current, 'focus');
+  }, [opening]);
+  useAnnounce(status);
+
   return (
     <ScrollView contentContainerStyle={styles.content}>
-      <Text accessibilityRole="header" style={styles.title}>{timedOut ? "Time's up" : 'Test complete'}</Text>
+      <Text ref={title} accessibilityRole="header" style={styles.title}>
+        {heading}
+      </Text>
 
       <View accessible style={styles.score}>
         {result.percent !== null && <Text style={styles.percent}>{result.percent}%</Text>}
@@ -35,14 +49,17 @@ export function PracticeResults({ questions, answers, unsaved, saving, timedOut,
         {result.unanswered > 0 && <Text style={styles.scoreNote}>{result.unanswered} not answered</Text>}
       </View>
 
-      {saving && <Text style={styles.notice}>Saving your last answer…</Text>}
-      {unsaved > 0 && <Text style={styles.notice}>{unsavedNotice(unsaved)}</Text>}
+      {status !== null && (
+        <Text accessibilityLiveRegion="polite" style={styles.notice}>
+          {status}
+        </Text>
+      )}
 
       <View style={styles.group}>
         <Text accessibilityRole="header" style={styles.label}>BY TOPIC</Text>
         {result.byDomain.map((row) => (
           <View key={row.id} accessible style={styles.row}>
-            <Text style={styles.rowName}>{nameOf(row.id)}</Text>
+            <Text style={styles.rowName}>{domainName(row.id)}</Text>
             <Text style={styles.rowScore}>{row.correct} of {row.total}</Text>
           </View>
         ))}

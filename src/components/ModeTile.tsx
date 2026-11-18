@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { ComponentProps } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, fonts, radius, space } from '@/theme/tokens';
+import { colors, edge as edges, fonts, radius, space } from '@/theme/tokens';
 
 type Props = {
   title: string;
@@ -12,7 +12,7 @@ type Props = {
   onPress: () => void;
 };
 
-const EDGE = 4;
+const EDGE = edges.tile;
 
 export function ModeTile({ title, detail, icon, iconColor, onPress }: Props) {
   return (

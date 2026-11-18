@@ -1,11 +1,11 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, fonts, radius, space } from '@/theme/tokens';
+import { colors, edge as edges, fonts, radius, space } from '@/theme/tokens';
 
 type Tone = 'green' | 'yellow' | 'plain';
 type Props = { label: string; onPress: () => void; tone?: Tone; disabled?: boolean };
 
-const EDGE = 5;
+const EDGE = edges.button;
 
 // `plain` is the quiet choice beside a main button; its outline holds 3:1 on white and on the tints.
 const tones: Record<Tone, { face: string; edge: string; text: string; outline: number }> = {

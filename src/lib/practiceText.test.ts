@@ -1,4 +1,4 @@
-import { scoreLine, setupSummary, shortNotice, unsavedNotice } from './practiceText';
+import { leaveNotice, scoreLine, setupSummary, shortNotice, unsavedNotice } from './practiceText';
 
 test('the summary names questions, topics and time, with singulars', () => {
   expect(setupSummary(10, 3, 13)).toBe('10 questions · 3 topics · 13 minutes');
@@ -22,4 +22,10 @@ test('unsaved answers are counted, not hidden', () => {
 
 test('the score reads as a count', () => {
   expect(scoreLine(8, 10)).toBe('8 of 10 correct');
+});
+
+test('the leave question only promises what was saved', () => {
+  expect(leaveNotice(0, false)).toBe('The questions you have answered still count toward today.');
+  expect(leaveNotice(0, true)).toBe('Your last answer is still being saved.');
+  expect(leaveNotice(2, true)).toBe(unsavedNotice(2));
 });

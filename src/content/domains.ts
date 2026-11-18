@@ -10,6 +10,11 @@ export const domains: readonly Domain[] = [
   { id: 'orderEntry', name: 'Order Entry and Processing', weight: 22.5 },
 ];
 
+/** A domain's name for the screen. */
+export function domainName(id: DomainId): string {
+  return domains.find((d) => d.id === id)?.name ?? id;
+}
+
 export const mockExam = { questions: 90, scored: 80, minutes: 110 } as const;
 
 /** Splits `total` questions across the chosen domains by exam weight; the counts sum to `total`. */

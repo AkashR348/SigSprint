@@ -68,10 +68,8 @@ function shuffled<T>(items: readonly T[], random: () => number): T[] {
   return out;
 }
 
-export type Picked = { questions: Question[]; requested: number };
-
 /** Draws a test from the pool by exam weight. A domain that runs short is topped up from the others chosen. */
-export function pickQuestions(pool: readonly Question[], config: TestConfig, random: () => number = Math.random): Picked {
+export function pickQuestions(pool: readonly Question[], config: TestConfig, random: () => number = Math.random): Question[] {
   // Each topic once, however the list was written, so no question is drawn twice.
   const ids = domains.map((d) => d.id).filter((id) => config.domains.includes(id));
   const want = allocateQuestions(config.count, ids);
@@ -84,7 +82,7 @@ export function pickQuestions(pool: readonly Question[], config: TestConfig, ran
   }
   const missing = Math.max(0, Math.floor(config.count) - taken.length);
   taken.push(...shuffled(spare, random).slice(0, missing));
-  return { questions: shuffled(taken, random), requested: config.count };
+  return shuffled(taken, random);
 }
 
 // null: not answered, which is not the same as wrong until the test ends.

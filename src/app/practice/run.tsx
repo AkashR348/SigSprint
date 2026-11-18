@@ -15,7 +15,9 @@ export default function PracticeRunScreen() {
   const router = useRouter();
   const config = fromParams(useLocalSearchParams());
   // Drawn once, so a redraw never reshuffles a test in progress.
-  const [questions] = useState(() => (config === null ? [] : pickQuestions(starterQuestions, config).questions));
+  const [questions] = useState(() => (config === null ? [] : pickQuestions(starterQuestions, config)));
+  // Goes back to the setup screen if it is underneath, and opens it if it is not.
+  const newTest = () => router.dismissTo('/practice/setup');
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -24,10 +26,10 @@ export default function PracticeRunScreen() {
       {config === null || questions.length === 0 ? (
         <View style={styles.broken}>
           <Text accessibilityRole="header" style={styles.text}>{setupBroken}</Text>
-          <ChunkyButton label="Back" onPress={() => router.back()} />
+          <ChunkyButton label="Back" onPress={newTest} />
         </View>
       ) : (
-        <PracticeRunner questions={questions} config={config} onLeave={() => router.dismissAll()} onNewTest={() => router.back()} />
+        <PracticeRunner questions={questions} config={config} onLeave={() => router.dismissTo('/')} onNewTest={newTest} />
       )}
     </SafeAreaView>
   );

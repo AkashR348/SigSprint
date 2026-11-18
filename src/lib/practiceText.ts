@@ -19,6 +19,16 @@ export function unsavedNotice(count: number): string {
   return `${plural(count, 'answer', 'answers')} couldn't be saved on this phone, so ${count === 1 ? "it isn't" : "they aren't"} in your streak, points or daily goal.`;
 }
 
+export const savingNotice = 'Saving your last answer…';
+export const answerUnsaved = "This answer couldn't be saved on this phone.";
+
+/** What leaving now means for the answers given, from what is known of their saves. */
+export function leaveNotice(unsaved: number, saving: boolean): string {
+  if (unsaved > 0) return unsavedNotice(unsaved);
+  if (saving) return 'Your last answer is still being saved.';
+  return 'The questions you have answered still count toward today.';
+}
+
 export function scoreLine(correct: number, total: number): string {
   return `${correct} of ${total} correct`;
 }

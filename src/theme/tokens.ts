@@ -37,5 +37,8 @@ export const fonts = {
 export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 28 } as const;
 export const radius = { md: 14, lg: 18, xl: 24, pill: 999 } as const;
 
+// Depth of a chunky control's bottom edge.
+export const edge = { tile: 4, button: 5 } as const;
+
 // Smallest tap target on either platform.
 export const minTouch = 48;

@@ -6,13 +6,15 @@ import { ChunkyButton } from '@/components/ChunkyButton';
 import { IconButton } from '@/components/IconButton';
 import { PracticeResults } from '@/components/PracticeResults';
 import { SourceLink } from '@/components/SourceLink';
-import { domains } from '@/content/domains';
+import { domainName } from '@/content/domains';
 import type { Question } from '@/content/questions';
 import { timeLimitSeconds, XP_PER_CORRECT, xpFor, type TestConfig } from '@/lib/practice';
+import { answerUnsaved, leaveNotice } from '@/lib/practiceText';
 import { clock, clockSpoken, finish, next, pick, startRun, submit } from '@/lib/practiceRun';
 import { dayKey, recordAnswer } from '@/lib/progress';
 import { updateProgress } from '@/lib/progressStore';
-import { colors, fonts, radius, space } from '@/theme/tokens';
+import { useAnnounce } from '@/lib/useAnnounce';
+import { colors, edge as edges, fonts, radius, space } from '@/theme/tokens';
 
 type Props = {
   questions: readonly Question[];
@@ -39,6 +41,7 @@ export function PracticeRunner({ questions, config, onLeave, onNewTest }: Props)
   const recorded = useRef(new Set<number>());
   const verdict = useRef<ComponentRef<typeof Text>>(null);
   const stem = useRef<ComponentRef<typeof Text>>(null);
+  const leaveTitle = useRef<ComponentRef<typeof Text>>(null);
 
   const timing = config.timed && !run.done;
   // Counted from a fixed end time, so time in the background still passes.
@@ -47,7 +50,8 @@ export function PracticeRunner({ questions, config, onLeave, onNewTest }: Props)
     const end = Date.now() + limit * 1000;
     endsAt.current = end;
     const tick = () => {
-      const seconds = (end - Date.now()) / 1000;
+      // Whole seconds, so the screen redraws once a second and not on every tick.
+      const seconds = Math.ceil((end - Date.now()) / 1000);
       setLeft(seconds);
       if (seconds <= 0) {
         setTimedOut(true);
@@ -72,6 +76,13 @@ export function PracticeRunner({ questions, config, onLeave, onNewTest }: Props)
     return () => sub.remove();
   }, [active]);
 
+  // The question replaces the button that was tapped, so say it and move a screen reader to it.
+  useEffect(() => {
+    if (!leaving) return;
+    AccessibilityInfo.announceForAccessibility('Leave this test?');
+    if (Platform.OS !== 'web' && leaveTitle.current) AccessibilityInfo.sendAccessibilityEvent(leaveTitle.current, 'focus');
+  }, [leaving]);
+
   const lastMinute = timing && left <= 60;
   useEffect(() => {
     if (lastMinute) AccessibilityInfo.announceForAccessibility('One minute left.');
@@ -89,6 +100,11 @@ export function PracticeRunner({ questions, config, onLeave, onNewTest }: Props)
     if (Platform.OS !== 'web' && verdict.current) AccessibilityInfo.sendAccessibilityEvent(verdict.current, 'focus');
   }, [said]);
 
+  const unsaved = Object.values(saves).filter((s) => s === 'failed').length;
+  const saving = Object.values(saves).some((s) => s === 'saving');
+  const thisFailed = run.revealed && saves[run.index] === 'failed';
+  useAnnounce(thisFailed ? answerUnsaved : null);
+
   const index = run.index;
   // A new question replaces the one that had focus.
   useEffect(() => {
@@ -100,8 +116,8 @@ export function PracticeRunner({ questions, config, onLeave, onNewTest }: Props)
       <PracticeResults
         questions={run.questions}
         answers={run.answers}
-        unsaved={Object.values(saves).filter((s) => s === 'failed').length}
-        saving={Object.values(saves).some((s) => s === 'saving')}
+        unsaved={unsaved}
+        saving={saving}
         timedOut={timedOut}
         onNewTest={onNewTest}
         onDone={onLeave}
@@ -133,7 +149,7 @@ export function PracticeRunner({ questions, config, onLeave, onNewTest }: Props)
 
   const total = run.questions.length;
   const isLast = run.index === total - 1;
-  const domain = domains.find((d) => d.id === question.domain)?.name ?? '';
+  const domain = domainName(question.domain);
   const saved = saves[run.index];
 
   return (
@@ -197,8 +213,10 @@ export function PracticeRunner({ questions, config, onLeave, onNewTest }: Props)
 
       {leaving ? (
         <View style={styles.footer}>
-          <Text accessibilityRole="header" style={styles.leaveTitle}>Leave this test?</Text>
-          <Text style={styles.body}>The questions you have answered still count toward today.</Text>
+          <Text ref={leaveTitle} accessibilityRole="header" style={styles.leaveTitle}>
+            Leave this test?
+          </Text>
+          <Text style={styles.body}>{leaveNotice(unsaved, saving)}</Text>
           <ChunkyButton label="Keep going" onPress={() => setLeaving(false)} />
           <ChunkyButton tone="plain" label="Leave" onPress={onLeave} />
         </View>
@@ -213,7 +231,11 @@ export function PracticeRunner({ questions, config, onLeave, onNewTest }: Props)
           </View>
           {!right && <Text style={styles.body}>The answer is {question.choices[question.answer]}.</Text>}
           <Text style={styles.body}>{question.explanation}</Text>
-          {saved === 'failed' && <Text style={styles.body}>{"This answer couldn't be saved on this phone."}</Text>}
+          {saved === 'failed' && (
+            <Text accessibilityLiveRegion="polite" style={styles.body}>
+              {answerUnsaved}
+            </Text>
+          )}
           <SourceLink source={question.source} />
           <ChunkyButton label={isLast ? 'See results' : 'Continue'} onPress={() => setRun(next(run))} />
         </View>
@@ -230,7 +252,7 @@ export function PracticeRunner({ questions, config, onLeave, onNewTest }: Props)
   );
 }
 
-const EDGE = 4;
+const EDGE = edges.tile;
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
@@ -247,7 +269,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.blueTint,
     borderRadius: radius.pill,
     overflow: 'hidden',
-    paddingVertical: 6,
+    paddingVertical: space.sm,
     paddingHorizontal: space.md,
   },
   clock: { color: colors.yellowOnTint, backgroundColor: colors.yellowTint, fontVariant: ['tabular-nums'] },
@@ -287,7 +309,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.yellow,
     borderRadius: radius.pill,
     overflow: 'hidden',
-    paddingVertical: 4,
+    paddingVertical: space.xs,
     paddingHorizontal: space.md,
   },
   leaveTitle: { fontFamily: fonts.black, fontSize: 20, color: colors.ink },

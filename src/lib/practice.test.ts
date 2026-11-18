@@ -39,29 +39,28 @@ test('time follows the real exam pace of 110 minutes for 90 questions', () => {
 });
 
 test('a test is split by exam weight and has no repeats', () => {
-  const { questions } = pickQuestions(pool, config({ count: 20 }));
+  const questions = pickQuestions(pool, config({ count: 20 }));
   expect(questions).toHaveLength(20);
   expect(new Set(questions.map((q) => q.id)).size).toBe(20);
   expect(all.map((d) => count(questions, d))).toEqual([7, 4, 5, 4]);
 });
 
 test('only the chosen topics appear', () => {
-  const { questions } = pickQuestions(pool, config({ domains: ['federal', 'safety'], count: 10 }));
+  const questions = pickQuestions(pool, config({ domains: ['federal', 'safety'], count: 10 }));
   expect(questions).toHaveLength(10);
   expect(count(questions, 'medications') + count(questions, 'orderEntry')).toBe(0);
 });
 
 test('a topic that runs short is topped up from the other chosen topics', () => {
   const thin = [...make('medications', 2), ...make('federal', 20)];
-  const { questions } = pickQuestions(thin, config({ domains: ['medications', 'federal'], count: 10 }));
+  const questions = pickQuestions(thin, config({ domains: ['medications', 'federal'], count: 10 }));
   expect(questions).toHaveLength(10);
   expect(count(questions, 'medications')).toBe(2);
 });
 
 test('a pool smaller than the request gives what there is and says what was asked for', () => {
   const picked = pickQuestions(make('federal', 3), config({ domains: ['federal'], count: 10 }));
-  expect(picked.questions).toHaveLength(3);
-  expect(picked.requested).toBe(10);
+  expect(picked).toHaveLength(3);
 });
 
 test('the same random source gives the same test', () => {
@@ -69,8 +68,8 @@ test('the same random source gives the same test', () => {
     let s = 7;
     return () => (s = (s * 16807) % 2147483647) / 2147483647;
   };
-  const a = pickQuestions(pool, config({}), seeded()).questions.map((q) => q.id);
-  const b = pickQuestions(pool, config({}), seeded()).questions.map((q) => q.id);
+  const a = pickQuestions(pool, config({}), seeded()).map((q) => q.id);
+  const b = pickQuestions(pool, config({}), seeded()).map((q) => q.id);
   expect(a).toEqual(b);
 });
 
@@ -131,6 +130,6 @@ test('available questions are counted for the chosen topics only', () => {
 test('a topic listed twice does not put a question in the test twice', () => {
   const pool = make('medications', 6);
   const picked = pickQuestions(pool, { domains: ['medications', 'medications'], count: 10, timed: false, showAnswers: 'each' }, () => 0.5);
-  expect(picked.questions).toHaveLength(6);
-  expect(new Set(picked.questions.map((q) => q.id)).size).toBe(6);
+  expect(picked).toHaveLength(6);
+  expect(new Set(picked.map((q) => q.id)).size).toBe(6);
 });

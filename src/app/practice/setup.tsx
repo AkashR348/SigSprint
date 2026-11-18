@@ -11,7 +11,8 @@ import { domains, type DomainId } from '@/content/domains';
 import { starterQuestions } from '@/content/starterQuestions';
 import { availableCount, defaultConfig, estimateMinutes, QUESTION_COUNTS, toParams, type TestConfig } from '@/lib/practice';
 import { setupSummary, shortNotice } from '@/lib/practiceText';
-import { colors, fonts, minTouch, radius, space } from '@/theme/tokens';
+import { useAnnounce } from '@/lib/useAnnounce';
+import { colors, edge as edges, fonts, minTouch, radius, space } from '@/theme/tokens';
 
 export default function PracticeSetupScreen() {
   const router = useRouter();
@@ -20,6 +21,9 @@ export default function PracticeSetupScreen() {
   const available = availableCount(starterQuestions, chosen);
   // The test can only be as long as the questions there are for these topics.
   const length = Math.min(config.count, available);
+
+  const notice = length < config.count && chosen.length > 0 ? shortNotice(available) : null;
+  useAnnounce(notice);
 
   const toggle = (id: DomainId) => {
     const next = domains.map((d) => d.id).filter((d) => (d === id ? !chosen.includes(d) : chosen.includes(d)));
@@ -91,7 +95,11 @@ export default function PracticeSetupScreen() {
       </ScrollView>
 
       <View style={styles.footer}>
-        {length < config.count && chosen.length > 0 && <Text style={styles.notice}>{shortNotice(available)}</Text>}
+        {notice !== null && (
+          <Text accessibilityLiveRegion="polite" style={styles.notice}>
+            {notice}
+          </Text>
+        )}
         <Text accessibilityLiveRegion="polite" style={styles.summary}>
           {setupSummary(length, chosen.length, config.timed ? estimateMinutes(length) : null)}
         </Text>
@@ -105,7 +113,7 @@ export default function PracticeSetupScreen() {
   );
 }
 
-const EDGE = 4;
+const EDGE = edges.tile;
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.surface },

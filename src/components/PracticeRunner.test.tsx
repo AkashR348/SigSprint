@@ -1,11 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
-import { BackHandler } from 'react-native';
+import { AccessibilityInfo, BackHandler, Linking } from 'react-native';
 
 import type { Question } from '@/content/questions';
 import { dayKey } from '@/lib/progress';
 import { loadProgress, PROGRESS_KEY, resetProgressStoreForTests } from '@/lib/progressStore';
 
+import * as Buttons from './ChunkyButton';
 import { PracticeRunner } from './PracticeRunner';
 
 const q = (id: string, answer: 0 | 1 | 2 | 3): Question => ({
@@ -184,4 +185,79 @@ test('an answer saved after midnight still counts for the day it was given', asy
   jest.useRealTimers();
   await waitFor(async () => expect(await stored()).toMatchObject({ days: { '2026-11-17': 1 } }));
   expect((await stored())?.days['2026-11-18']).toBeUndefined();
+});
+
+test('two taps before the screen redraws record the answer once', async () => {
+  // Keep the handler from one draw, as two touches inside a single frame would.
+  const real = Buttons.ChunkyButton;
+  const handlers: Record<string, () => void> = {};
+  const spy = jest.spyOn(Buttons, 'ChunkyButton').mockImplementation((props) => {
+    handlers[props.label] = props.onPress;
+    return real(props);
+  });
+  await start({ timed: false, showAnswers: 'end' });
+  await choose(/one a/);
+  const stale = handlers.Next;
+  await act(async () => {
+    stale();
+    stale();
+  });
+  spy.mockRestore();
+  await waitFor(async () => expect(await stored()).toMatchObject({ xp: 10 }));
+  expect(AsyncStorage.setItem).toHaveBeenCalledTimes(1);
+  expect((await stored())?.days[dayKey(new Date())]).toBe(1);
+});
+
+test('the leave question is said aloud and does not promise an answer that failed to save', async () => {
+  const say = jest.spyOn(AccessibilityInfo, 'announceForAccessibility');
+  jest.mocked(AsyncStorage.setItem).mockRejectedValueOnce(new Error('full'));
+  await start({ timed: false, showAnswers: 'each' });
+  await choose(/one a/);
+  await press('Check');
+  await screen.findByText("This answer couldn't be saved on this phone.");
+  expect(say).toHaveBeenCalledWith("This answer couldn't be saved on this phone.");
+  await press('Close practice test');
+  expect(say).toHaveBeenCalledWith('Leave this test?');
+  expect(screen.getByText(/1 answer couldn't be saved on this phone/)).toBeTruthy();
+  expect(screen.queryByText(/still count toward today/)).toBeNull();
+});
+
+test('with every answer saved the leave question says they count', async () => {
+  await start({ timed: false, showAnswers: 'each' });
+  await choose(/one a/);
+  await press('Check');
+  await screen.findByText('+10 XP');
+  await press('Close practice test');
+  expect(screen.getByText('The questions you have answered still count toward today.')).toBeTruthy();
+});
+
+test('the end of a test is said aloud with the score, and so is an unsaved answer', async () => {
+  const say = jest.spyOn(AccessibilityInfo, 'announceForAccessibility');
+  jest.mocked(AsyncStorage.setItem).mockRejectedValueOnce(new Error('full'));
+  await start({ timed: false, showAnswers: 'end' });
+  await choose(/one a/);
+  await press('Next');
+  await choose(/two a/);
+  await press('Finish');
+  expect(say).toHaveBeenCalledWith('Test complete. 1 of 2 correct.');
+  await waitFor(() => expect(say).toHaveBeenCalledWith(expect.stringMatching(/^1 answer couldn't be saved/)));
+});
+
+test('running out of time is said aloud', async () => {
+  const say = jest.spyOn(AccessibilityInfo, 'announceForAccessibility');
+  jest.useFakeTimers();
+  await start({ timed: true, showAnswers: 'end' });
+  await act(async () => {
+    jest.advanceTimersByTime(148_000);
+  });
+  expect(say).toHaveBeenCalledWith("Time's up. 0 of 2 correct.");
+});
+
+test('a source that cannot be opened shows its address instead', async () => {
+  jest.spyOn(Linking, 'openURL').mockRejectedValueOnce(new Error('no browser'));
+  await start({ timed: false, showAnswers: 'each' });
+  await choose(/one a/);
+  await press('Check');
+  await fireEvent.press(screen.getByRole('link', { name: 'Source: Source one' }));
+  expect(await screen.findByText("Couldn't open the page. Its address is https://www.fda.gov/x")).toBeTruthy();
 });

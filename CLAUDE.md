@@ -47,7 +47,7 @@ this SDK; read it before touching an Expo or React Native API.
 
 | Path | What it is |
 | --- | --- |
-| `src/app` | Expo Router screens, one file per route. `_layout.tsx` is the root stack and `(tabs)/_layout.tsx` the tab bar; a test runs outside the tabs. No route is named `test.tsx`: jest takes it for a test. |
+| `src/app` | Expo Router screens, one file per route. `_layout.tsx` is the root stack and `(tabs)/_layout.tsx` the tab bar; a test runs outside the tabs. Jest does not look for tests here (`testPathIgnorePatterns`), so a route's name is never taken for one. |
 | `src/components` | Shared UI in the Capsule Pop style. |
 | `docs` | Notes that need more than a rule: one file per subject. |
 | `src/content` | Exam facts: domains, weights, mock exam shape, and the starter questions that ship in the app. |
