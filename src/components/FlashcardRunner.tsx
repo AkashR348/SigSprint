@@ -117,6 +117,7 @@ export function FlashcardRunner({ cards, deckIds, title, onLeave }: Props) {
                 </Text>
               </View>
               {card.detail !== undefined && <Text style={styles.detail}>{card.detail}</Text>}
+              {card.note !== undefined && <Text style={styles.note}>Note: {card.note}</Text>}
               {card.facts.length > 0 && (
                 <View>
                   {card.facts.map((fact) => (
@@ -246,6 +247,7 @@ const styles = StyleSheet.create({
   name: { fontFamily: fonts.black, fontSize: NAME_SIZE, lineHeight: 44, color: colors.ink },
   answer: { color: colors.green },
   detail: { fontFamily: fonts.bold, fontSize: 16, lineHeight: 24, color: colors.ink },
+  note: { fontFamily: fonts.bold, fontSize: 14, lineHeight: 20, color: colors.muted },
   fact: {
     flexDirection: 'row',
     justifyContent: 'space-between',

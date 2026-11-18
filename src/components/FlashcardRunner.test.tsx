@@ -208,7 +208,24 @@ test('a boxed warning card shows the drug, then its warning, detail and label, w
   expect(screen.getByText('Stop it as soon as pregnancy is detected.')).toBeTruthy();
   expect(screen.getByRole('link', { name: 'Source: BrandA label, DailyMed' })).toBeTruthy();
   expect(screen.queryByText('Class')).toBeNull();
+  expect(screen.queryByText(/^Note:/)).toBeNull();
   await press('Easy, shows this card again in 5 days');
   await screen.findByText('All done for now');
   expect(await stored()).toMatchObject({ xp: 0, days: { [today()]: 1 }, cards: { 'boxed-A': { due: addDays(today(), 5), gap: 5 } } });
+});
+
+test('a warning card with a note shows it under the warning', async () => {
+  const warning = warningFace({
+    id: 'boxed-A',
+    brand: 'BrandA',
+    generic: 'genericA',
+    heading: 'Profound diuresis',
+    detail: 'A potent diuretic.',
+    note: 'Not coded as a boxed warning.',
+    source: { title: 'BrandA label, DailyMed', url: 'https://dailymed.nlm.nih.gov/x' },
+  });
+  await render(<FlashcardRunner cards={[warning]} deckIds={['boxed-A']} title="Boxed warnings" onLeave={onLeave} />);
+  expect(screen.queryByText(/^Note:/)).toBeNull();
+  await press('Show answer');
+  expect(screen.getByText('Note: Not coded as a boxed warning.')).toBeTruthy();
 });

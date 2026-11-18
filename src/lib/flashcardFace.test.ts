@@ -55,3 +55,9 @@ test('a warning card shows the drug by both names and answers with the warning a
     sources: [source],
   });
 });
+
+test('a warning card passes its note on, and a card without one has none', () => {
+  const card: BoxedWarning = { id: 'boxed-x', brand: 'Lasix', generic: 'furosemide', heading: 'Profound diuresis', detail: 'A potent diuretic.', source };
+  expect(warningFace(card).note).toBeUndefined();
+  expect(warningFace({ ...card, note: 'Not coded as boxed.' }).note).toBe('Not coded as boxed.');
+});

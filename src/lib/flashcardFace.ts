@@ -16,6 +16,8 @@ export type Face = {
   spoken: string;
   phrase: boolean;
   detail?: string;
+  // A caution about the answer itself, drawn under the detail.
+  note?: string;
   facts: readonly { label: string; value: string }[];
   trick?: string;
   sources: readonly Source[];
@@ -55,6 +57,7 @@ export function warningFace(card: BoxedWarning): Face {
     spoken: `${drug}: ${card.heading}`,
     phrase: true,
     detail: card.detail,
+    ...(card.note === undefined ? {} : { note: card.note }),
     facts: [],
     sources: [card.source],
   };

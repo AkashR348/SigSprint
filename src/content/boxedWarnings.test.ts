@@ -1,10 +1,10 @@
 import { boxedWarnings } from './boxedWarnings';
 import { drugCards } from './drugCards';
 
-test('there are 12 warning cards, one per drug, each with its own id', () => {
-  expect(boxedWarnings).toHaveLength(12);
-  expect(new Set(boxedWarnings.map((w) => w.id)).size).toBe(12);
-  expect(new Set(boxedWarnings.map((w) => w.generic)).size).toBe(12);
+test('there are 13 warning cards, one per drug, each with its own id', () => {
+  expect(boxedWarnings).toHaveLength(13);
+  expect(new Set(boxedWarnings.map((w) => w.id)).size).toBe(13);
+  expect(new Set(boxedWarnings.map((w) => w.generic)).size).toBe(13);
 });
 
 test.each(boxedWarnings.map((w) => [w.id, w] as const))('%s names a drug in the deck and cites that drug\'s own label', (_, card) => {
@@ -18,12 +18,10 @@ test.each(boxedWarnings.map((w) => [w.id, w] as const))('%s names a drug in the 
   expect(card.detail.trim().length).toBeGreaterThan(40);
 });
 
-// Drugs whose label was read and found to carry no boxed warning in its Highlights. Furosemide's
-// opening warning is coded as an ordinary Warnings section in its DailyMed record.
+// Drugs whose label was read and found to carry no boxed warning in its Highlights.
 const noBoxedWarning = [
   'drug-amlodipine',
   'drug-metoprolol-succinate',
-  'drug-furosemide',
   'drug-atorvastatin',
   'drug-rosuvastatin',
   'drug-sitagliptin',
@@ -40,6 +38,11 @@ test('every drug card either has a warning card or is listed as checked and foun
   expect(withWarning.filter((id) => noBoxedWarning.includes(id))).toEqual([]);
   expect(drugCards.map((d) => d.id).filter((id) => !withWarning.includes(id) && !noBoxedWarning.includes(id))).toEqual([]);
   expect(noBoxedWarning.filter((id) => !drugCards.some((d) => d.id === id))).toEqual([]);
+});
+
+test('only the furosemide card carries a note, saying its warning is not coded as boxed', () => {
+  expect(boxedWarnings.filter((w) => w.note !== undefined).map((w) => w.id)).toEqual(['boxed-furosemide']);
+  expect(boxedWarnings.find((w) => w.id === 'boxed-furosemide')?.note).toMatch(/does not code it as a boxed warning/);
 });
 
 test('no warning card shares an id with a drug card, so their schedules stay apart', () => {

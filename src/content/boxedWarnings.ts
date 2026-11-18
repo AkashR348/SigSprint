@@ -3,21 +3,24 @@ import type { Source } from './questions';
 
 // One card for each drug in the deck whose FDA label carries a boxed warning in its Highlights.
 // `heading` is the label's own heading, shortened; `detail` is the warning under it, shortened.
+// `note` is shown on the card where the label's record does not code the warning as boxed.
 export type BoxedWarning = {
   id: string;
   brand: string;
   generic: string;
   heading: string;
   detail: string;
+  note?: string;
   source: Source;
 };
 
 // Brand, generic and label come from the drug's own card, so the two decks cannot disagree.
 // `slug` is the drug card's id without its "drug-" prefix.
-function warning(slug: string, heading: string, detail: string): BoxedWarning {
+function warning(slug: string, heading: string, detail: string, note?: string): BoxedWarning {
   const drug = drugCards.find((c) => c.id === `drug-${slug}`);
   if (drug === undefined) throw new Error(`No drug card drug-${slug}`);
-  return { id: `boxed-${slug}`, brand: drug.brand, generic: drug.generic, heading, detail, source: drug.source };
+  const card = { id: `boxed-${slug}`, brand: drug.brand, generic: drug.generic, heading, detail, source: drug.source };
+  return note === undefined ? card : { ...card, note };
 }
 
 const fetal =
@@ -28,6 +31,12 @@ const suicidal =
 export const boxedWarnings: readonly BoxedWarning[] = [
   warning('lisinopril', 'Fetal toxicity', fetal),
   warning('losartan', 'Fetal toxicity', fetal),
+  warning(
+    'furosemide',
+    'Profound diuresis with water and electrolyte depletion',
+    'A potent diuretic: in excessive amounts it can lead to a profound diuresis with water and electrolyte depletion. It needs careful medical supervision, with the dose and schedule adjusted to the patient.',
+    "The label opens with this warning. FDA's structured label does not code it as a boxed warning.",
+  ),
   warning(
     'clopidogrel',
     'Diminished antiplatelet effect in patients with two loss-of-function alleles of the CYP2C19 gene',
