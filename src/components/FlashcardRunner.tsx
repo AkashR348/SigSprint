@@ -5,8 +5,8 @@ import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } fr
 import { ChunkyButton } from '@/components/ChunkyButton';
 import { IconButton } from '@/components/IconButton';
 import { SourceLink } from '@/components/SourceLink';
-import { stemSource, type DrugCard } from '@/content/drugCards';
-import { cardUnsaved, directionName, doneLine, gapLabel, nameSize, NAME_SIZE, ratingName, ratingSpoken, type Direction } from '@/lib/flashcardText';
+import type { Face } from '@/lib/flashcardFace';
+import { cardUnsaved, doneLine, gapLabel, nameSize, NAME_SIZE, ratingName, ratingSpoken } from '@/lib/flashcardText';
 import { focusOn } from '@/lib/focusOn';
 import { dayKey } from '@/lib/progress';
 import { getProgressState, subscribeProgress, updateProgress } from '@/lib/progressStore';
@@ -14,13 +14,13 @@ import { countReady, daysBetween, nextDue, nextGap, rateCard, RATINGS, type Rati
 import { useAnnounce } from '@/lib/useAnnounce';
 import { colors, edge as edges, fonts, radius, space } from '@/theme/tokens';
 
-// `deck` is every card there is, so the end can say what is still waiting outside this sitting.
-type Props = { cards: readonly DrugCard[]; deck: readonly DrugCard[]; direction: Direction; onLeave: () => void };
+// `deckIds` is every card in the deck, so the end can say what is still waiting outside this sitting.
+type Props = { cards: readonly Face[]; deckIds: readonly string[]; title: string; onLeave: () => void };
 
 /** One sitting of flashcards: show a name, reveal the card, rate it. Each rating is saved before the next card. */
-export function FlashcardRunner({ cards, deck, direction, onLeave }: Props) {
+export function FlashcardRunner({ cards, deckIds, title, onLeave }: Props) {
   // Again sends a card to the back of the queue; Good and Easy take it out.
-  const [queue, setQueue] = useState<readonly DrugCard[]>(cards);
+  const [queue, setQueue] = useState<readonly Face[]>(cards);
   const [shown, setShown] = useState(false);
   const [finished, setFinished] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -32,14 +32,12 @@ export function FlashcardRunner({ cards, deck, direction, onLeave }: Props) {
 
   const card = queue.at(0);
   const total = cards.length;
-  const asked = card ? (direction === 'brand' ? card.brand : card.generic) : '';
-  const answer = card ? (direction === 'brand' ? card.generic : card.brand) : '';
   const view = card === undefined ? 'done' : `${card.id}:${shown}:${queue.length}`;
   const mounted = useRef(false);
   const window = useWindowDimensions();
 
   useAnnounce(failed ? cardUnsaved : null);
-  // Each card, and each side of it, replaces what had focus. Focus reads the name, so nothing is announced as well.
+  // Each card, and each side of it, replaces what had focus. Focus reads the heading, so nothing is announced as well.
   // The first card leaves focus where the screen put it.
   useEffect(() => {
     if (mounted.current) focusOn(heading.current);
@@ -48,9 +46,8 @@ export function FlashcardRunner({ cards, deck, direction, onLeave }: Props) {
 
   if (card === undefined) {
     const today = dayKey(new Date());
-    const ids = deck.map((c) => c.id);
-    const { review, fresh } = countReady(ids, states, today);
-    const due = nextDue(ids, states, today);
+    const { review, fresh } = countReady(deckIds, states, today);
+    const due = nextDue(deckIds, states, today);
     return <Done line={doneLine(total, review + fresh, due === null ? null : daysBetween(today, due))} onLeave={onLeave} />;
   }
 
@@ -76,8 +73,8 @@ export function FlashcardRunner({ cards, deck, direction, onLeave }: Props) {
 
   const at = Math.min(finished + 1, total);
   // A long name shrinks to fit the card, so large text or a narrow screen never splits a word.
-  const fit = (name: string) => {
-    const size = nameSize(name, window.width - CARD_INSET, window.fontScale);
+  const fit = (name: string, most: number = NAME_SIZE) => {
+    const size = Math.min(most, nameSize(name, window.width - CARD_INSET, window.fontScale));
     return { fontSize: size, lineHeight: Math.round(size * 1.22) };
   };
   const previous = states?.[card.id]?.gap;
@@ -100,7 +97,7 @@ export function FlashcardRunner({ cards, deck, direction, onLeave }: Props) {
               {at} of {total}
             </Text>
           </View>
-          <Text style={styles.deck}>Top drugs · {directionName[direction]}</Text>
+          <Text style={styles.deck}>{title}</Text>
         </View>
 
         <View style={styles.card}>
@@ -108,30 +105,41 @@ export function FlashcardRunner({ cards, deck, direction, onLeave }: Props) {
           {shown ? (
             <>
               <View>
-                <Text style={styles.lead}>{asked} is</Text>
-                <Text ref={heading} accessibilityRole="header" style={[styles.name, styles.answer, fit(answer)]}>
-                  {answer}
+                <Text accessibilityElementsHidden importantForAccessibility="no" aria-hidden style={styles.lead}>
+                  {card.answerLead}
+                </Text>
+                <Text
+                  ref={heading}
+                  accessibilityRole="header"
+                  accessibilityLabel={card.spoken}
+                  style={[styles.name, styles.answer, fit(card.answer, card.phrase ? PHRASE_SIZE : NAME_SIZE)]}>
+                  {card.answer}
                 </Text>
               </View>
-              <View>
-                <Fact label="Class" value={card.drugClass} />
-                <Fact label="Used for" value={card.usedFor} />
-                <Fact label="Watch for" value={card.watchFor} />
-              </View>
+              {card.detail !== undefined && <Text style={styles.detail}>{card.detail}</Text>}
+              {card.note !== undefined && <Text style={styles.note}>Note: {card.note}</Text>}
+              {card.facts.length > 0 && (
+                <View>
+                  {card.facts.map((fact) => (
+                    <Fact key={fact.label} label={fact.label} value={fact.value} />
+                  ))}
+                </View>
+              )}
               {card.trick !== undefined && (
                 <View style={styles.trick}>
                   <Ionicons name="bulb" size={22} color={colors.greenOnTint} />
                   <Text style={styles.trickText}>Memory trick: {card.trick}</Text>
                 </View>
               )}
-              <SourceLink source={card.source} />
-              {card.trick !== undefined && <SourceLink source={stemSource} />}
+              {card.sources.map((source) => (
+                <SourceLink key={source.url} source={source} />
+              ))}
             </>
           ) : (
             <View style={styles.front}>
-              <Text style={styles.lead}>What is the {direction === 'brand' ? 'generic' : 'brand'} name for</Text>
-              <Text ref={heading} accessibilityRole="header" style={[styles.name, fit(asked)]}>
-                {asked}
+              <Text style={styles.lead}>{card.lead}</Text>
+              <Text ref={heading} accessibilityRole="header" style={[styles.name, fit(card.name)]}>
+                {card.name}
               </Text>
             </View>
           )}
@@ -200,6 +208,8 @@ function Done({ line, onLeave }: { line: string; onLeave: () => void }) {
 }
 
 const EDGE = edges.tile;
+// An answer that is a sentence, not a name.
+const PHRASE_SIZE = 22;
 // Screen padding, card padding and card border, both sides.
 const CARD_INSET = space.xl * 4 + 4;
 
@@ -236,6 +246,8 @@ const styles = StyleSheet.create({
   lead: { fontFamily: fonts.extraBold, fontSize: 15, color: colors.muted },
   name: { fontFamily: fonts.black, fontSize: NAME_SIZE, lineHeight: 44, color: colors.ink },
   answer: { color: colors.green },
+  detail: { fontFamily: fonts.bold, fontSize: 16, lineHeight: 24, color: colors.ink },
+  note: { fontFamily: fonts.bold, fontSize: 14, lineHeight: 20, color: colors.muted },
   fact: {
     flexDirection: 'row',
     justifyContent: 'space-between',

@@ -6,8 +6,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChunkyButton } from '@/components/ChunkyButton';
 import { IconButton } from '@/components/IconButton';
 import { Segmented } from '@/components/Segmented';
-import { drugCards } from '@/content/drugCards';
 import {
+  deckIntro,
+  DECKS,
   DEFAULT_SITTING,
   flashcardRule,
   flashcardsLoading,
@@ -16,22 +17,25 @@ import {
   readyLine,
   sittingLimit,
   SITTINGS,
+  type Deck,
   type Direction,
   type Sitting,
 } from '@/lib/flashcardText';
+import { decks } from '@/lib/flashcardDecks';
 import { dayKey } from '@/lib/progress';
 import { getProgressState, subscribeProgress } from '@/lib/progressStore';
 import { countReady, daysBetween, nextDue, sessionCards } from '@/lib/review';
 import { colors, fonts, minTouch, space } from '@/theme/tokens';
 
-const ids = drugCards.map((c) => c.id);
 const TITLE_SIZE = 24;
 // Screen padding both sides, the back button and the gap after it.
 const TITLE_INSET = space.xl * 2 + minTouch + space.md;
 
 export default function FlashcardSetupScreen() {
   const router = useRouter();
+  const [deck, setDeck] = useState<Deck>('drugs');
   const [direction, setDirection] = useState<Direction>('brand');
+  const { ids, twoWay } = decks[deck];
   const window = useWindowDimensions();
   // The title is one word; it shrinks rather than run off a narrow screen or large text.
   const titleSize = Math.min(TITLE_SIZE, nameSize('Flashcards', window.width - TITLE_INSET, window.fontScale));
@@ -46,7 +50,7 @@ export default function FlashcardSetupScreen() {
     const today = dayKey(new Date());
     const { review, fresh } = countReady(ids, state.progress.cards, today);
     const due = nextDue(ids, state.progress.cards, today);
-    ready = sessionCards(drugCards, state.progress.cards, today, sittingLimit(size) ?? 0).length;
+    ready = sessionCards(ids.map((id) => ({ id })), state.progress.cards, today, sittingLimit(size) ?? 0).length;
     line = readyLine(review, fresh, ready, due === null ? null : daysBetween(today, due));
   }
 
@@ -57,20 +61,23 @@ export default function FlashcardSetupScreen() {
           <IconButton icon="chevron-back" label="Back" onPress={() => router.back()} />
           <Text accessibilityRole="header" style={[styles.title, { fontSize: titleSize }]}>Flashcards</Text>
         </View>
-        <Text style={styles.body}>
-          {drugCards.length} of the top 200 drugs so far. See one name, say the other, then check the card and rate how well you knew it.
-        </Text>
         <View style={styles.row}>
-          <Segmented
-            label="Show me"
-            options={[
-              { value: 'brand', label: 'Brand name' },
-              { value: 'generic', label: 'Generic name' },
-            ]}
-            value={direction}
-            onChange={setDirection}
-          />
+          <Segmented label="Deck" options={DECKS} value={deck} onChange={setDeck} />
         </View>
+        <Text style={styles.body}>{deckIntro(deck, ids.length)}</Text>
+        {twoWay && (
+          <View style={styles.row}>
+            <Segmented
+              label="Show me"
+              options={[
+                { value: 'brand', label: 'Brand name' },
+                { value: 'generic', label: 'Generic name' },
+              ]}
+              value={direction}
+              onChange={setDirection}
+            />
+          </View>
+        )}
         <View style={styles.row}>
           <Segmented label="Cards this sitting" options={SITTINGS} value={size} onChange={setSize} />
         </View>
@@ -81,7 +88,7 @@ export default function FlashcardSetupScreen() {
         <ChunkyButton
           label="Start"
           disabled={ready === 0}
-          onPress={() => router.push({ pathname: '/flashcards/run', params: { direction, size } })}
+          onPress={() => router.push({ pathname: '/flashcards/run', params: { deck, direction, size } })}
         />
       </View>
     </SafeAreaView>

@@ -40,7 +40,8 @@ the points if they were a sound number. The daily goal is not recovered.
 
 ## Flashcard schedules
 
-Each rated drug card is kept in the save under `cards`, by the card's id, as the day it is next due,
+Each rated card, from the drug names deck (`drug-…`) or the boxed warnings deck (`boxed-…`), is
+kept in the save under `cards`, by the card's id, as the day it is next due,
 the gap in days that led there, and the last day it counted toward the goal (`src/lib/review.ts`).
 
 - **Again** keeps the card in the sitting and makes it due the same day. **Good** waits 2 days and
