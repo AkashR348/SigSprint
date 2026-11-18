@@ -1,4 +1,4 @@
-import { doneLine, gapLabel, ratingSpoken, readyLine, toDirection, deckLabel } from './flashcardText';
+import { doneLine, gapLabel, ratingSpoken, readyLine, toDirection, deckLabel, nameSize } from './flashcardText';
 
 test('only the two directions are read from a route', () => {
   expect(toDirection('brand')).toBe('brand');
@@ -35,4 +35,14 @@ test('the end of a sitting says cards are still ready before it names a later da
   expect(doneLine(20, 4, 2)).toBe('You went through 20 cards. 4 more cards are ready now.');
   expect(doneLine(20, 1, null)).toBe('You went through 20 cards. 1 more card is ready now.');
   expect(deckLabel(24)).toBe('Top drugs: 24 so far');
+});
+
+test('a drug name keeps its full size when it fits, and shrinks by its longest word when it does not', () => {
+  expect(nameSize('lisinopril', 306, 1)).toBe(36);
+  expect(nameSize('metoprolol succinate', 306, 1)).toBe(36);
+  expect(nameSize('Singulair', 111, 1)).toBe(18);
+  expect(nameSize('Singulair', 306, 2)).toBe(25);
+  expect(nameSize('levothyroxine', 60, 3)).toBe(16);
+  expect(nameSize('', 306, 1)).toBe(36);
+  expect(nameSize('Zestril', 0, 1)).toBe(36);
 });

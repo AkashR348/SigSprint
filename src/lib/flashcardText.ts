@@ -11,6 +11,18 @@ export function toDirection(value: unknown): Direction | null {
   return value === 'brand' || value === 'generic' ? value : null;
 }
 
+export const NAME_SIZE = 36;
+const NAME_FLOOR = 16;
+// Width of an average Nunito Black letter, as a share of the font size.
+const LETTER = 0.66;
+
+/** Font size for a drug name so its longest word fits `width` at the phone's text scale, and never breaks inside a word. */
+export function nameSize(name: string, width: number, fontScale: number): number {
+  const longest = Math.max(...name.split(/\s+/).map((w) => w.length));
+  if (longest === 0 || !(width > 0) || !(fontScale > 0)) return NAME_SIZE;
+  return Math.max(NAME_FLOOR, Math.min(NAME_SIZE, Math.floor(width / (longest * LETTER * fontScale))));
+}
+
 export const ratingName: Record<Rating, string> = { again: 'Again', good: 'Good', easy: 'Easy' };
 
 /** When a card comes back after a rating, as drawn under the button. */

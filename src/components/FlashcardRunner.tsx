@@ -1,12 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { type ComponentRef, useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { ChunkyButton } from '@/components/ChunkyButton';
 import { IconButton } from '@/components/IconButton';
 import { SourceLink } from '@/components/SourceLink';
 import { stemSource, type DrugCard } from '@/content/drugCards';
-import { cardUnsaved, directionName, doneLine, gapLabel, ratingName, ratingSpoken, type Direction } from '@/lib/flashcardText';
+import { cardUnsaved, directionName, doneLine, gapLabel, nameSize, NAME_SIZE, ratingName, ratingSpoken, type Direction } from '@/lib/flashcardText';
 import { focusOn } from '@/lib/focusOn';
 import { dayKey } from '@/lib/progress';
 import { getProgressState, subscribeProgress, updateProgress } from '@/lib/progressStore';
@@ -36,6 +36,7 @@ export function FlashcardRunner({ cards, deck, direction, onLeave }: Props) {
   const answer = card ? (direction === 'brand' ? card.generic : card.brand) : '';
   const view = card === undefined ? 'done' : `${card.id}:${shown}:${queue.length}`;
   const mounted = useRef(false);
+  const window = useWindowDimensions();
 
   useAnnounce(failed ? cardUnsaved : null);
   // Each card, and each side of it, replaces what had focus. Focus reads the name, so nothing is announced as well.
@@ -74,6 +75,11 @@ export function FlashcardRunner({ cards, deck, direction, onLeave }: Props) {
   };
 
   const at = Math.min(finished + 1, total);
+  // A long name shrinks to fit the card, so large text or a narrow screen never splits a word.
+  const fit = (name: string) => {
+    const size = nameSize(name, window.width - CARD_INSET, window.fontScale);
+    return { fontSize: size, lineHeight: Math.round(size * 1.22) };
+  };
   const previous = states?.[card.id]?.gap;
 
   return (
@@ -103,7 +109,7 @@ export function FlashcardRunner({ cards, deck, direction, onLeave }: Props) {
             <>
               <View>
                 <Text style={styles.lead}>{asked} is</Text>
-                <Text ref={heading} accessibilityRole="header" style={[styles.name, styles.answer]}>
+                <Text ref={heading} accessibilityRole="header" style={[styles.name, styles.answer, fit(answer)]}>
                   {answer}
                 </Text>
               </View>
@@ -124,7 +130,7 @@ export function FlashcardRunner({ cards, deck, direction, onLeave }: Props) {
           ) : (
             <View style={styles.front}>
               <Text style={styles.lead}>What is the {direction === 'brand' ? 'generic' : 'brand'} name for</Text>
-              <Text ref={heading} accessibilityRole="header" style={styles.name}>
+              <Text ref={heading} accessibilityRole="header" style={[styles.name, fit(asked)]}>
                 {asked}
               </Text>
             </View>
@@ -194,6 +200,8 @@ function Done({ line, onLeave }: { line: string; onLeave: () => void }) {
 }
 
 const EDGE = edges.tile;
+// Screen padding, card padding and card border, both sides.
+const CARD_INSET = space.xl * 4 + 4;
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
@@ -226,7 +234,7 @@ const styles = StyleSheet.create({
   },
   front: { minHeight: 220, justifyContent: 'center' },
   lead: { fontFamily: fonts.extraBold, fontSize: 15, color: colors.muted },
-  name: { fontFamily: fonts.black, fontSize: 36, lineHeight: 44, color: colors.ink },
+  name: { fontFamily: fonts.black, fontSize: NAME_SIZE, lineHeight: 44, color: colors.ink },
   answer: { color: colors.green },
   fact: {
     flexDirection: 'row',
