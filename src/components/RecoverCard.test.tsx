@@ -130,3 +130,20 @@ test('a look that fails says so and offers to check again, which then finds the 
   expect(await screen.findByText(found)).toBeTruthy();
   expect(screen.queryByText("We couldn't check this phone for old saved data.")).toBeNull();
 });
+
+test('checking again says when it still fails, and when it finds nothing', async () => {
+  resetProgressStoreForTests();
+  await AsyncStorage.clear();
+  await loadProgress();
+  jest.mocked(AsyncStorage.getAllKeys).mockRejectedValueOnce(new Error('disk')).mockRejectedValueOnce(new Error('disk'));
+  const say = jest.spyOn(AccessibilityInfo, 'announceForAccessibility');
+  say.mockClear();
+  await render(<RecoverCard />);
+  await fireEvent.press(await screen.findByRole('button', { name: 'Check again' }));
+  await waitFor(() => expect(say).toHaveBeenCalledWith("Still couldn't check this phone."));
+  expect(screen.getByRole('button', { name: 'Check again' })).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', { name: 'Check again' }));
+  expect(await screen.findByText('No old saved data found.')).toBeTruthy();
+  expect(say).toHaveBeenCalledWith('No old saved data found.');
+  expect(screen.queryByRole('button')).toBeNull();
+});

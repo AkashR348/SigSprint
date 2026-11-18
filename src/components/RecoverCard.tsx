@@ -4,7 +4,7 @@ import { AccessibilityInfo, Platform, StyleSheet, Text, View } from 'react-nativ
 import { ChunkyButton } from '@/components/ChunkyButton';
 import type { Progress } from '@/lib/progress';
 import { findRecovery, getProgressState, handleRecovery, subscribeProgress, type Recovery } from '@/lib/progressStore';
-import { lookFailed, recoveryFailed, recoveryResult, recoverySummary, recoveryTitle } from '@/lib/recoveryText';
+import { lookFailed, lookFailedAgain, lookFoundNone, recoveryFailed, recoveryResult, recoverySummary, recoveryTitle } from '@/lib/recoveryText';
 import { colors, fonts, radius, space } from '@/theme/tokens';
 
 // `done` holds the buttons locked until the next look for backups replaces the card.
@@ -22,12 +22,20 @@ export function RecoverCard() {
   const [step, setStep] = useState<Step | null>(null);
   const [told, setTold] = useState<Result | null>(null);
   const resultLine = useRef<ComponentRef<typeof Text>>(null);
+  // Set by Check again, so only a look the person asked for reports back.
+  const asked = useRef(false);
 
   // Look when the save becomes ready and when a backup is handled; an answer changes neither.
   useEffect(() => {
     let current = true;
     void findRecovery().then((next) => {
-      if (current) setLook(next);
+      if (!current) return;
+      setLook(next);
+      if (!asked.current) return;
+      asked.current = false;
+      const now = getProgressState();
+      if (next === 'failed') AccessibilityInfo.announceForAccessibility(lookFailedAgain);
+      else if (next === null && now.status === 'ready') setTold({ key: 'look', text: lookFoundNone, progress: now.progress });
     });
     return () => {
       current = false;
@@ -91,7 +99,11 @@ export function RecoverCard() {
       {lookedBadly && (
         <>
           <Text style={styles.text}>{lookFailed}</Text>
-          <ChunkyButton tone="plain" label="Check again" onPress={() => setTries((n) => n + 1)} />
+          <ChunkyButton tone="plain" label="Check again" onPress={() => {
+              asked.current = true;
+              setTries((n) => n + 1);
+            }}
+          />
         </>
       )}
       {recovery !== null && at !== 'done' && (

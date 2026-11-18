@@ -19,6 +19,9 @@ export const recoveryFailed = "That didn't work, and nothing was changed. You ca
 
 export const lookFailed = "We couldn't check this phone for old saved data.";
 
+export const lookFailedAgain = "Still couldn't check this phone.";
+export const lookFoundNone = 'No old saved data found.';
+
 export const recoveryTitle = 'Old saved data';
 
 /** What to say once a backup is dealt with. `found` false: there was nothing in it to add. */
