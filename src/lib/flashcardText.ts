@@ -4,6 +4,31 @@ export type Direction = 'brand' | 'generic';
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
+// Which set of cards a sitting draws from, as chosen on the setup screen and carried in the route.
+export type Deck = 'drugs' | 'boxed';
+export const DECKS: readonly { value: Deck; label: string }[] = [
+  { value: 'drugs', label: 'Drug names' },
+  { value: 'boxed', label: 'Boxed warnings' },
+];
+
+/** The route's `deck` value, or null when it is not one. */
+export function toDeck(value: unknown): Deck | null {
+  return value === 'drugs' || value === 'boxed' ? value : null;
+}
+
+/** What the setup screen says about a deck of `cards` cards. */
+export function deckIntro(deck: Deck, cards: number): string {
+  if (deck === 'boxed') {
+    return `${plural(cards, 'drug', 'drugs')} in the deck whose FDA label has a boxed warning. See the drug, say the warning, then check the card and rate how well you knew it.`;
+  }
+  return `${cards} of the top 200 drugs so far. See one name, say the other, then check the card and rate how well you knew it.`;
+}
+
+/** The line over the progress bar while studying. */
+export function sittingTitle(deck: Deck, direction: Direction): string {
+  return deck === 'boxed' ? 'Boxed warnings' : `Top drugs · ${directionName[direction]}`;
+}
+
 export const directionName: Record<Direction, string> = { brand: 'Brand to generic', generic: 'Generic to brand' };
 
 /** The route's `direction` value, or null when it is not one. */

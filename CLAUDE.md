@@ -34,7 +34,10 @@ this SDK; read it before touching an Expo or React Native API.
    `starterQuestions.test.ts` checks that each stores a source on a primary site; only reading the
    source checks the answer itself. A sum cites the source of the fact it uses. A drug card
    (`src/content/drugCards.ts`) is held to the same rule against its FDA label, and carries a memory
-   trick only for a name stem in the cited stem list; `drugCards.test.ts` checks both sources.
+   trick only for a name stem in the cited stem list; `drugCards.test.ts` checks both sources. A
+   boxed warning card (`src/content/boxedWarnings.ts`) exists only where that label's Highlights
+   carry a boxed warning, and takes its drug and label from the drug card;
+   `boxedWarnings.test.ts` checks the link, and only reading the label checks the warning.
 8. **Comments are short and say only what the code can't**: an invariant, a unit, a trap, or the
    reason for a surprising choice. One line, two at most. No history; git has it.
 9. **Progress is read and written only through `src/lib/progressStore.ts`**; lint
@@ -53,7 +56,7 @@ this SDK; read it before touching an Expo or React Native API.
 | `src/app` | Expo Router screens, one file per route. `_layout.tsx` is the root stack and `(tabs)/_layout.tsx` the tab bar; a test runs outside the tabs. Jest does not look for tests here (`testPathIgnorePatterns`), so a route's name is never taken for one. |
 | `src/components` | Shared UI in the Capsule Pop style. |
 | `docs` | Notes that need more than a rule: one file per subject. |
-| `src/content` | Exam facts: domains, weights, mock exam shape, and the starter questions and drug cards that ship in the app. |
+| `src/content` | Exam facts: domains, weights, mock exam shape, and the starter questions, drug cards and boxed warning cards that ship in the app. |
 | `src/lib` | Pure logic and hooks. Logic that can be a pure function is one, with a test beside it. |
 | `src/theme` | Design tokens. |
 

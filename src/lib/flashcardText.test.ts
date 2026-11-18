@@ -1,4 +1,4 @@
-import { doneLine, gapLabel, ratingSpoken, readyLine, toDirection, deckLabel, nameSize, sittingLimit } from './flashcardText';
+import { doneLine, gapLabel, ratingSpoken, readyLine, toDirection, deckLabel, nameSize, deckIntro, sittingLimit, sittingTitle, toDeck } from './flashcardText';
 
 test('only the two directions are read from a route', () => {
   expect(toDirection('brand')).toBe('brand');
@@ -50,4 +50,12 @@ test('a drug name keeps its full size when it fits, and shrinks by its longest w
 test('a sitting size is 10, 20 or no limit, and anything else is not one', () => {
   expect([sittingLimit('10'), sittingLimit('20'), sittingLimit('all')]).toEqual([10, 20, Number.POSITIVE_INFINITY]);
   expect([sittingLimit('30'), sittingLimit(20), sittingLimit(undefined), sittingLimit(['10'])]).toEqual([null, null, null, null]);
+});
+
+test('a deck is drug names or boxed warnings, and each says what it holds', () => {
+  expect([toDeck('drugs'), toDeck('boxed'), toDeck('all'), toDeck(undefined)]).toEqual(['drugs', 'boxed', null, null]);
+  expect(deckIntro('drugs', 24)).toMatch(/^24 of the top 200 drugs so far\./);
+  expect(deckIntro('boxed', 12)).toMatch(/^12 drugs in the deck whose FDA label has a boxed warning\./);
+  expect(sittingTitle('drugs', 'generic')).toBe('Top drugs · Generic to brand');
+  expect(sittingTitle('boxed', 'generic')).toBe('Boxed warnings');
 });

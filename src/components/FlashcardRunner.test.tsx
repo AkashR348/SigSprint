@@ -3,6 +3,8 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
 
 import type { DrugCard } from '@/content/drugCards';
+import { drugFace, warningFace } from '@/lib/flashcardFace';
+import type { Direction } from '@/lib/flashcardText';
 import { addDays, dayKey } from '@/lib/progress';
 import { loadProgress, PROGRESS_KEY, resetProgressStoreForTests } from '@/lib/progressStore';
 
@@ -19,6 +21,8 @@ const card = (n: string, trick?: string): DrugCard => ({
   source: { title: `Brand${n} label, DailyMed`, url: 'https://dailymed.nlm.nih.gov/x' },
 });
 const two = [card('A', 'Names ending in -a are things.'), card('B')];
+const faces = (cards: DrugCard[], direction: Direction) => cards.map((c) => drugFace(c, direction));
+const ids = (cards: DrugCard[]) => cards.map((c) => c.id);
 const onLeave = jest.fn();
 const today = () => dayKey(new Date());
 
@@ -37,7 +41,7 @@ beforeEach(async () => {
 });
 
 test('a card shows one name, and its facts and source only after Show answer', async () => {
-  await render(<FlashcardRunner cards={two} deck={two} direction="brand" onLeave={onLeave} />);
+  await render(<FlashcardRunner cards={faces(two, 'brand')} deckIds={ids(two)} title="Deck title" onLeave={onLeave} />);
   expect(screen.getByText('What is the generic name for')).toBeTruthy();
   expect(screen.getByRole('header', { name: 'BrandA' })).toBeTruthy();
   expect(screen.queryByText('genericA')).toBeNull();
@@ -54,7 +58,7 @@ test('a card shows one name, and its facts and source only after Show answer', a
 });
 
 test('generic to brand asks with the generic name', async () => {
-  await render(<FlashcardRunner cards={two} deck={two} direction="generic" onLeave={onLeave} />);
+  await render(<FlashcardRunner cards={faces(two, 'generic')} deckIds={ids(two)} title="Deck title" onLeave={onLeave} />);
   expect(screen.getByText('What is the brand name for')).toBeTruthy();
   expect(screen.getByRole('header', { name: 'genericA' })).toBeTruthy();
   await press('Show answer');
@@ -62,14 +66,14 @@ test('generic to brand asks with the generic name', async () => {
 });
 
 test('a card with no trick shows none, and no stem source', async () => {
-  await render(<FlashcardRunner cards={[two[1]]} deck={two} direction="brand" onLeave={onLeave} />);
+  await render(<FlashcardRunner cards={faces([two[1]], 'brand')} deckIds={ids(two)} title="Deck title" onLeave={onLeave} />);
   await press('Show answer');
   expect(screen.queryByText(/Memory trick/)).toBeNull();
   expect(screen.queryByRole('link', { name: /Stem Book/ })).toBeNull();
 });
 
 test('Good saves a 2 day gap, counts toward today with no points, and moves on', async () => {
-  await render(<FlashcardRunner cards={two} deck={two} direction="brand" onLeave={onLeave} />);
+  await render(<FlashcardRunner cards={faces(two, 'brand')} deckIds={ids(two)} title="Deck title" onLeave={onLeave} />);
   await press('Show answer');
   await press('Good, shows this card again in 2 days');
   expect(await screen.findByRole('header', { name: 'BrandB' })).toBeTruthy();
@@ -81,7 +85,7 @@ test('Good saves a 2 day gap, counts toward today with no points, and moves on',
 });
 
 test('a card rated Again and then Good counts once toward today', async () => {
-  await render(<FlashcardRunner cards={[two[0]]} deck={two} direction="brand" onLeave={onLeave} />);
+  await render(<FlashcardRunner cards={faces([two[0]], 'brand')} deckIds={ids(two)} title="Deck title" onLeave={onLeave} />);
   await press('Show answer');
   await press('Again, shows this card again soon');
   await screen.findByText('What is the generic name for');
@@ -96,7 +100,7 @@ test('a card rated Again and then Good counts once toward today', async () => {
 });
 
 test('the end says cards outside the sitting are still ready, not when the next is due', async () => {
-  await render(<FlashcardRunner cards={[two[0]]} deck={two} direction="brand" onLeave={onLeave} />);
+  await render(<FlashcardRunner cards={faces([two[0]], 'brand')} deckIds={ids(two)} title="Deck title" onLeave={onLeave} />);
   await press('Show answer');
   await press('Good, shows this card again in 2 days');
   expect(await screen.findByText('You went through 1 card. 1 more card is ready now.')).toBeTruthy();
@@ -104,7 +108,7 @@ test('the end says cards outside the sitting are still ready, not when the next 
 });
 
 test('the end says when the next card is due once the whole deck is done for today', async () => {
-  await render(<FlashcardRunner cards={[two[0]]} deck={[two[0]]} direction="brand" onLeave={onLeave} />);
+  await render(<FlashcardRunner cards={faces([two[0]], 'brand')} deckIds={ids([two[0]])} title="Deck title" onLeave={onLeave} />);
   await press('Show answer');
   await press('Good, shows this card again in 2 days');
   expect(await screen.findByText('You went through 1 card. Your next card is due in 2 days.')).toBeTruthy();
@@ -113,7 +117,7 @@ test('the end says when the next card is due once the whole deck is done for tod
 test('each side is given focus and nothing is announced on top of it', async () => {
   const focus = jest.spyOn(AccessibilityInfo, 'sendAccessibilityEvent');
   const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility');
-  await render(<FlashcardRunner cards={[two[0]]} deck={[two[0]]} direction="brand" onLeave={onLeave} />);
+  await render(<FlashcardRunner cards={faces([two[0]], 'brand')} deckIds={ids([two[0]])} title="Deck title" onLeave={onLeave} />);
   expect(focus).not.toHaveBeenCalled();
   await press('Show answer');
   expect(focus).toHaveBeenCalledTimes(1);
@@ -130,7 +134,7 @@ test('Easy saves 5 days, and a card rated before offers its grown gaps', async (
   );
   resetProgressStoreForTests();
   await loadProgress();
-  await render(<FlashcardRunner cards={two} deck={two} direction="brand" onLeave={onLeave} />);
+  await render(<FlashcardRunner cards={faces(two, 'brand')} deckIds={ids(two)} title="Deck title" onLeave={onLeave} />);
   await press('Show answer');
   expect(screen.getByRole('button', { name: 'Good, shows this card again in 8 days' })).toBeTruthy();
   await press('Easy, shows this card again in 12 days');
@@ -144,7 +148,7 @@ test('Easy saves 5 days, and a card rated before offers its grown gaps', async (
 });
 
 test('Again brings the card back in the same sitting, and the sitting ends only when every card is rated Good or Easy', async () => {
-  await render(<FlashcardRunner cards={two} deck={two} direction="brand" onLeave={onLeave} />);
+  await render(<FlashcardRunner cards={faces(two, 'brand')} deckIds={ids(two)} title="Deck title" onLeave={onLeave} />);
   await press('Show answer');
   await press('Again, shows this card again soon');
   await screen.findByRole('header', { name: 'BrandB' });
@@ -163,7 +167,7 @@ test('Again brings the card back in the same sitting, and the sitting ends only 
 
 test('a rating that cannot be saved says so and keeps the card, so nothing unsaved is shown as done', async () => {
   jest.mocked(AsyncStorage.setItem).mockRejectedValueOnce(new Error('full'));
-  await render(<FlashcardRunner cards={two} deck={two} direction="brand" onLeave={onLeave} />);
+  await render(<FlashcardRunner cards={faces(two, 'brand')} deckIds={ids(two)} title="Deck title" onLeave={onLeave} />);
   await press('Show answer');
   await press(/^Good/);
   expect(await screen.findByText("That rating couldn't be saved on this phone. Try again.")).toBeTruthy();
@@ -176,11 +180,35 @@ test('a rating that cannot be saved says so and keeps the card, so nothing unsav
 });
 
 test('the progress bar counts finished cards, and close leaves at once', async () => {
-  await render(<FlashcardRunner cards={two} deck={two} direction="brand" onLeave={onLeave} />);
+  await render(<FlashcardRunner cards={faces(two, 'brand')} deckIds={ids(two)} title="Deck title" onLeave={onLeave} />);
   expect(screen.getByRole('progressbar', { name: 'Card 1 of 2', value: { now: 0, max: 2 } })).toBeTruthy();
   await press('Show answer');
   await press(/^Easy/);
   expect(await screen.findByRole('progressbar', { name: 'Card 2 of 2', value: { now: 1, max: 2 } })).toBeTruthy();
   await press('Close flashcards');
   expect(onLeave).toHaveBeenCalledTimes(1);
+});
+
+test('a boxed warning card shows the drug, then its warning, detail and label, with no facts table', async () => {
+  const warning = warningFace({
+    id: 'boxed-A',
+    brand: 'BrandA',
+    generic: 'genericA',
+    heading: 'Fetal toxicity',
+    detail: 'Stop it as soon as pregnancy is detected.',
+    source: { title: 'BrandA label, DailyMed', url: 'https://dailymed.nlm.nih.gov/x' },
+  });
+  await render(<FlashcardRunner cards={[warning]} deckIds={['boxed-A']} title="Boxed warnings" onLeave={onLeave} />);
+  expect(screen.getByText('Boxed warnings')).toBeTruthy();
+  expect(screen.getByText('What is the boxed warning for')).toBeTruthy();
+  expect(screen.getByRole('header', { name: 'BrandA (genericA)' })).toBeTruthy();
+  expect(screen.queryByText('Fetal toxicity')).toBeNull();
+  await press('Show answer');
+  expect(screen.getByRole('header', { name: 'Fetal toxicity' })).toBeTruthy();
+  expect(screen.getByText('Stop it as soon as pregnancy is detected.')).toBeTruthy();
+  expect(screen.getByRole('link', { name: 'Source: BrandA label, DailyMed' })).toBeTruthy();
+  expect(screen.queryByText('Class')).toBeNull();
+  await press('Easy, shows this card again in 5 days');
+  await screen.findByText('All done for now');
+  expect(await stored()).toMatchObject({ xp: 0, days: { [today()]: 1 }, cards: { 'boxed-A': { due: addDays(today(), 5), gap: 5 } } });
 });
