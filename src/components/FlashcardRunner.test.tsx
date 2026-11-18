@@ -133,10 +133,10 @@ test('a rating that cannot be saved says so and keeps the card, so nothing unsav
 
 test('the progress bar counts finished cards, and close leaves at once', async () => {
   await render(<FlashcardRunner cards={two} direction="brand" onLeave={onLeave} />);
-  expect(screen.getByRole('progressbar', { name: 'Card 1 of 2' })).toBeTruthy();
+  expect(screen.getByRole('progressbar', { name: 'Card 1 of 2', value: { now: 0, max: 2 } })).toBeTruthy();
   await press('Show answer');
   await press(/^Easy/);
-  expect(await screen.findByRole('progressbar', { name: 'Card 2 of 2' })).toBeTruthy();
+  expect(await screen.findByRole('progressbar', { name: 'Card 2 of 2', value: { now: 1, max: 2 } })).toBeTruthy();
   await press('Close flashcards');
   expect(onLeave).toHaveBeenCalledTimes(1);
 });
