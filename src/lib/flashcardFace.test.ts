@@ -22,9 +22,10 @@ test('a drug card asks with one name and answers with the other', () => {
     name: 'Zestril',
     answerLead: 'Zestril is',
     answer: 'lisinopril',
+    spoken: 'Zestril is lisinopril',
     phrase: false,
   });
-  expect(drugFace(drug, 'generic')).toMatchObject({ lead: 'What is the brand name for', name: 'lisinopril', answerLead: 'lisinopril is', answer: 'Zestril' });
+  expect(drugFace(drug, 'generic')).toMatchObject({ lead: 'What is the brand name for', name: 'lisinopril', answerLead: 'lisinopril is', answer: 'Zestril', spoken: 'lisinopril is Zestril' });
 });
 
 test('a drug card lists its three facts, and cites the stem list only when it has a trick', () => {
@@ -47,6 +48,7 @@ test('a warning card shows the drug by both names and answers with the warning a
     name: 'Zestril (lisinopril)',
     answerLead: 'Boxed warning for Zestril (lisinopril)',
     answer: 'Fetal toxicity',
+    spoken: 'Zestril (lisinopril): Fetal toxicity',
     phrase: true,
     detail: 'Stop it when pregnancy is detected.',
     facts: [],

@@ -88,10 +88,8 @@ export function readyLine(review: number, fresh: number, sitting: number, nextIn
   return sitting < total ? `${ready} This sitting has ${sitting}.` : ready;
 }
 
-/** The deck's name on a tile. It says how many cards there are, since the top 200 are not all here yet. */
-export function deckLabel(cards: number): string {
-  return `Top drugs: ${cards} so far`;
-}
+// Under "Flashcards" on the Home and Study tiles: both decks, so neither is hidden behind setup.
+export const flashcardsTile = 'Drug names and boxed warnings';
 
 export const flashcardRule = "Each card counts once a day toward today's goal. Cards give no XP.";
 export const flashcardsLoading = 'Loading your cards…';

@@ -37,7 +37,7 @@ export function FlashcardRunner({ cards, deckIds, title, onLeave }: Props) {
   const window = useWindowDimensions();
 
   useAnnounce(failed ? cardUnsaved : null);
-  // Each card, and each side of it, replaces what had focus. Focus reads the name, so nothing is announced as well.
+  // Each card, and each side of it, replaces what had focus. Focus reads the heading, so nothing is announced as well.
   // The first card leaves focus where the screen put it.
   useEffect(() => {
     if (mounted.current) focusOn(heading.current);
@@ -105,10 +105,13 @@ export function FlashcardRunner({ cards, deckIds, title, onLeave }: Props) {
           {shown ? (
             <>
               <View>
-                <Text style={styles.lead}>{card.answerLead}</Text>
+                <Text accessibilityElementsHidden importantForAccessibility="no" aria-hidden style={styles.lead}>
+                  {card.answerLead}
+                </Text>
                 <Text
                   ref={heading}
                   accessibilityRole="header"
+                  accessibilityLabel={card.spoken}
                   style={[styles.name, styles.answer, fit(card.answer, card.phrase ? PHRASE_SIZE : NAME_SIZE)]}>
                   {card.answer}
                 </Text>

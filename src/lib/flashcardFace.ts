@@ -12,6 +12,8 @@ export type Face = {
   name: string;
   answerLead: string;
   answer: string;
+  // What a screen reader says when the answer is given focus: the question with its answer.
+  spoken: string;
   phrase: boolean;
   detail?: string;
   facts: readonly { label: string; value: string }[];
@@ -22,12 +24,14 @@ export type Face = {
 /** A drug card asked from the brand name or from the generic name. */
 export function drugFace(card: DrugCard, direction: Direction): Face {
   const asked = direction === 'brand' ? card.brand : card.generic;
+  const answer = direction === 'brand' ? card.generic : card.brand;
   return {
     id: card.id,
     lead: `What is the ${direction === 'brand' ? 'generic' : 'brand'} name for`,
     name: asked,
     answerLead: `${asked} is`,
-    answer: direction === 'brand' ? card.generic : card.brand,
+    answer,
+    spoken: `${asked} is ${answer}`,
     phrase: false,
     facts: [
       { label: 'Class', value: card.drugClass },
@@ -48,6 +52,7 @@ export function warningFace(card: BoxedWarning): Face {
     name: drug,
     answerLead: `Boxed warning for ${drug}`,
     answer: card.heading,
+    spoken: `${drug}: ${card.heading}`,
     phrase: true,
     detail: card.detail,
     facts: [],

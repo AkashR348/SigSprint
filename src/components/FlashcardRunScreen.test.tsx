@@ -65,6 +65,14 @@ test('the boxed warnings deck shows a drug by both names and holds only warning 
   expect(screen.getByRole('progressbar', { name: `Card 1 of ${boxedWarnings.length}` })).toBeTruthy();
 });
 
+test('the boxed warnings deck needs no direction, since it asks one way', async () => {
+  mockParams = { deck: 'boxed', size: 'all' };
+  await loadProgress();
+  await render(<FlashcardRunScreen />);
+  expect(screen.getByText('What is the boxed warning for')).toBeTruthy();
+  expect(screen.queryByText(/couldn't be set up/)).toBeNull();
+});
+
 test('a deck that is not one is refused, not read as the drug deck', async () => {
   mockParams = { deck: 'everything', direction: 'brand', size: '20' };
   await loadProgress();

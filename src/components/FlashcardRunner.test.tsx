@@ -47,7 +47,7 @@ test('a card shows one name, and its facts and source only after Show answer', a
   expect(screen.queryByText('genericA')).toBeNull();
   expect(screen.queryByRole('button', { name: /Good/ })).toBeNull();
   await press('Show answer');
-  expect(screen.getByRole('header', { name: 'genericA' })).toBeTruthy();
+  expect(screen.getByRole('header', { name: 'BrandA is genericA' })).toBeTruthy();
   expect(screen.getByText('Class A')).toBeTruthy();
   expect(screen.getByText('Use A')).toBeTruthy();
   expect(screen.getByText('Watch A')).toBeTruthy();
@@ -62,7 +62,7 @@ test('generic to brand asks with the generic name', async () => {
   expect(screen.getByText('What is the brand name for')).toBeTruthy();
   expect(screen.getByRole('header', { name: 'genericA' })).toBeTruthy();
   await press('Show answer');
-  expect(screen.getByRole('header', { name: 'BrandA' })).toBeTruthy();
+  expect(screen.getByRole('header', { name: 'genericA is BrandA' })).toBeTruthy();
 });
 
 test('a card with no trick shows none, and no stem source', async () => {
@@ -171,7 +171,7 @@ test('a rating that cannot be saved says so and keeps the card, so nothing unsav
   await press('Show answer');
   await press(/^Good/);
   expect(await screen.findByText("That rating couldn't be saved on this phone. Try again.")).toBeTruthy();
-  expect(screen.getByRole('header', { name: 'genericA' })).toBeTruthy();
+  expect(screen.getByRole('header', { name: 'BrandA is genericA' })).toBeTruthy();
   expect(await stored()).toBeNull();
   await press(/^Good/);
   expect(await screen.findByRole('header', { name: 'BrandB' })).toBeTruthy();
@@ -204,7 +204,7 @@ test('a boxed warning card shows the drug, then its warning, detail and label, w
   expect(screen.getByRole('header', { name: 'BrandA (genericA)' })).toBeTruthy();
   expect(screen.queryByText('Fetal toxicity')).toBeNull();
   await press('Show answer');
-  expect(screen.getByRole('header', { name: 'Fetal toxicity' })).toBeTruthy();
+  expect(screen.getByRole('header', { name: 'BrandA (genericA): Fetal toxicity' })).toBeTruthy();
   expect(screen.getByText('Stop it as soon as pregnancy is detected.')).toBeTruthy();
   expect(screen.getByRole('link', { name: 'Source: BrandA label, DailyMed' })).toBeTruthy();
   expect(screen.queryByText('Class')).toBeNull();

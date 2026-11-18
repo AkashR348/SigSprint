@@ -6,8 +6,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChunkyButton } from '@/components/ChunkyButton';
 import { IconButton } from '@/components/IconButton';
 import { Segmented } from '@/components/Segmented';
-import { boxedWarnings } from '@/content/boxedWarnings';
-import { drugCards } from '@/content/drugCards';
 import {
   deckIntro,
   DECKS,
@@ -23,12 +21,12 @@ import {
   type Direction,
   type Sitting,
 } from '@/lib/flashcardText';
+import { decks } from '@/lib/flashcardDecks';
 import { dayKey } from '@/lib/progress';
 import { getProgressState, subscribeProgress } from '@/lib/progressStore';
 import { countReady, daysBetween, nextDue, sessionCards } from '@/lib/review';
 import { colors, fonts, minTouch, space } from '@/theme/tokens';
 
-const decks: Record<Deck, readonly { id: string }[]> = { drugs: drugCards, boxed: boxedWarnings };
 const TITLE_SIZE = 24;
 // Screen padding both sides, the back button and the gap after it.
 const TITLE_INSET = space.xl * 2 + minTouch + space.md;
@@ -37,7 +35,7 @@ export default function FlashcardSetupScreen() {
   const router = useRouter();
   const [deck, setDeck] = useState<Deck>('drugs');
   const [direction, setDirection] = useState<Direction>('brand');
-  const cards = decks[deck];
+  const { ids, twoWay } = decks[deck];
   const window = useWindowDimensions();
   // The title is one word; it shrinks rather than run off a narrow screen or large text.
   const titleSize = Math.min(TITLE_SIZE, nameSize('Flashcards', window.width - TITLE_INSET, window.fontScale));
@@ -50,10 +48,9 @@ export default function FlashcardSetupScreen() {
   if (state.status === 'unavailable') line = flashcardsNeedSave;
   if (state.status === 'ready') {
     const today = dayKey(new Date());
-    const ids = cards.map((c) => c.id);
     const { review, fresh } = countReady(ids, state.progress.cards, today);
     const due = nextDue(ids, state.progress.cards, today);
-    ready = sessionCards(cards, state.progress.cards, today, sittingLimit(size) ?? 0).length;
+    ready = sessionCards(ids.map((id) => ({ id })), state.progress.cards, today, sittingLimit(size) ?? 0).length;
     line = readyLine(review, fresh, ready, due === null ? null : daysBetween(today, due));
   }
 
@@ -67,8 +64,8 @@ export default function FlashcardSetupScreen() {
         <View style={styles.row}>
           <Segmented label="Deck" options={DECKS} value={deck} onChange={setDeck} />
         </View>
-        <Text style={styles.body}>{deckIntro(deck, cards.length)}</Text>
-        {deck === 'drugs' && (
+        <Text style={styles.body}>{deckIntro(deck, ids.length)}</Text>
+        {twoWay && (
           <View style={styles.row}>
             <Segmented
               label="Show me"

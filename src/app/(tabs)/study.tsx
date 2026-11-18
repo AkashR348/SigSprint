@@ -3,8 +3,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ModeTile } from '@/components/ModeTile';
-import { drugCards } from '@/content/drugCards';
-import { deckLabel } from '@/lib/flashcardText';
+import { flashcardsTile } from '@/lib/flashcardText';
 import { colors, fonts, space } from '@/theme/tokens';
 
 export default function StudyScreen() {
@@ -23,7 +22,7 @@ export default function StudyScreen() {
           />
           <ModeTile
             title="Flashcards"
-            detail={deckLabel(drugCards.length)}
+            detail={flashcardsTile}
             icon="albums"
             iconColor={colors.amber}
             onPress={() => router.push('/flashcards/setup')}

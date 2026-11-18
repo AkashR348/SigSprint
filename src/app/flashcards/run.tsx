@@ -5,9 +5,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ChunkyButton } from '@/components/ChunkyButton';
 import { FlashcardRunner } from '@/components/FlashcardRunner';
-import { boxedWarnings } from '@/content/boxedWarnings';
-import { drugCards } from '@/content/drugCards';
-import { drugFace, warningFace, type Face } from '@/lib/flashcardFace';
+import { decks } from '@/lib/flashcardDecks';
+import type { Face } from '@/lib/flashcardFace';
 import { flashcardsBroken, flashcardsLoading, flashcardsNeedSave, sittingLimit, sittingTitle, toDeck, toDirection } from '@/lib/flashcardText';
 import { dayKey } from '@/lib/progress';
 import { getProgressState, subscribeProgress } from '@/lib/progressStore';
@@ -18,15 +17,16 @@ export default function FlashcardRunScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const deck = toDeck(params.deck);
-  const direction = toDirection(params.direction);
   const limit = sittingLimit(params.size);
+  // A deck that asks one way needs no direction, so a missing or odd one is not held against it.
+  const asked = toDirection(params.direction);
+  const direction = deck !== null && !decks[deck].twoWay ? 'brand' : asked;
   const state = useSyncExternalStore(subscribeProgress, getProgressState, getProgressState);
   const valid = deck !== null && direction !== null && limit !== null;
   // Drawn when the save is first read, and only then, so rating a card never reshuffles the sitting.
   const [cards, setCards] = useState<Face[] | null>(null);
   if (cards === null && valid && state.status === 'ready') {
-    const faces = deck === 'boxed' ? boxedWarnings.map(warningFace) : drugCards.map((c) => drugFace(c, direction));
-    setCards(sessionCards(faces, state.progress.cards, dayKey(new Date()), limit));
+    setCards(sessionCards(decks[deck].faces(direction), state.progress.cards, dayKey(new Date()), limit));
   }
 
   // Back to the tab the setup screen was opened from; a screen opened by a link has nothing under it.
@@ -46,12 +46,7 @@ export default function FlashcardRunScreen() {
           <ChunkyButton label="Back" onPress={() => router.dismissTo('/flashcards/setup')} />
         </View>
       ) : (
-        <FlashcardRunner
-          cards={cards}
-          deckIds={(deck === 'boxed' ? boxedWarnings : drugCards).map((c) => c.id)}
-          title={sittingTitle(deck, direction)}
-          onLeave={leave}
-        />
+        <FlashcardRunner cards={cards} deckIds={decks[deck].ids} title={sittingTitle(deck, direction)} onLeave={leave} />
       )}
     </SafeAreaView>
   );

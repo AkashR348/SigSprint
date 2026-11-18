@@ -37,7 +37,8 @@ this SDK; read it before touching an Expo or React Native API.
    trick only for a name stem in the cited stem list; `drugCards.test.ts` checks both sources. A
    boxed warning card (`src/content/boxedWarnings.ts`) exists only where that label's Highlights
    carry a boxed warning, and takes its drug and label from the drug card;
-   `boxedWarnings.test.ts` checks the link, and only reading the label checks the warning.
+   `boxedWarnings.test.ts` checks the link and fails a drug card that has neither a warning card
+   nor an entry in its checked-and-none list; only reading the label checks the warning.
 8. **Comments are short and say only what the code can't**: an invariant, a unit, a trap, or the
    reason for a surprising choice. One line, two at most. No history; git has it.
 9. **Progress is read and written only through `src/lib/progressStore.ts`**; lint
