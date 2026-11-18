@@ -205,6 +205,7 @@ export function PracticeRunner({ questions, config, onLeave, onNewTest }: Props)
                 accessibilityRole="radio"
                 accessibilityLabel={`${LETTERS[i]}. ${choice}${mark}`}
                 accessibilityState={{ checked: on, disabled: run.revealed }}
+                aria-checked={on}
                 disabled={run.revealed}
                 onPress={() => setRun(pick(run, i))}
                 style={[styles.choice, on && styles.choiceOn, isAnswer && styles.choiceRight, isWrong && styles.choiceWrong]}>

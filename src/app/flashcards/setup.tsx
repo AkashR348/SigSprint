@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useState, useSyncExternalStore } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ChunkyButton } from '@/components/ChunkyButton';
@@ -12,6 +12,7 @@ import {
   flashcardRule,
   flashcardsLoading,
   flashcardsNeedSave,
+  nameSize,
   readyLine,
   sittingLimit,
   SITTINGS,
@@ -21,13 +22,19 @@ import {
 import { dayKey } from '@/lib/progress';
 import { getProgressState, subscribeProgress } from '@/lib/progressStore';
 import { countReady, daysBetween, nextDue, sessionCards } from '@/lib/review';
-import { colors, fonts, space } from '@/theme/tokens';
+import { colors, fonts, minTouch, space } from '@/theme/tokens';
 
 const ids = drugCards.map((c) => c.id);
+const TITLE_SIZE = 24;
+// Screen padding both sides, the back button and the gap after it.
+const TITLE_INSET = space.xl * 2 + minTouch + space.md;
 
 export default function FlashcardSetupScreen() {
   const router = useRouter();
   const [direction, setDirection] = useState<Direction>('brand');
+  const window = useWindowDimensions();
+  // The title is one word; it shrinks rather than run off a narrow screen or large text.
+  const titleSize = Math.min(TITLE_SIZE, nameSize('Flashcards', window.width - TITLE_INSET, window.fontScale));
   const [size, setSize] = useState<Sitting>(DEFAULT_SITTING);
   const state = useSyncExternalStore(subscribeProgress, getProgressState, getProgressState);
 
@@ -48,7 +55,7 @@ export default function FlashcardSetupScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.header}>
           <IconButton icon="chevron-back" label="Back" onPress={() => router.back()} />
-          <Text accessibilityRole="header" style={styles.title}>Flashcards</Text>
+          <Text accessibilityRole="header" style={[styles.title, { fontSize: titleSize }]}>Flashcards</Text>
         </View>
         <Text style={styles.body}>
           {drugCards.length} of the top 200 drugs so far. See one name, say the other, then check the card and rate how well you knew it.
@@ -85,7 +92,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.surface },
   content: { padding: space.xl, gap: space.xl },
   header: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-  title: { fontFamily: fonts.black, fontSize: 24, color: colors.ink, flexShrink: 1 },
+  title: { fontFamily: fonts.black, fontSize: TITLE_SIZE, color: colors.ink, flexShrink: 1 },
   body: { fontFamily: fonts.bold, fontSize: 16, lineHeight: 24, color: colors.ink },
   row: { flexDirection: 'row' },
   footer: { padding: space.xl, paddingTop: space.md, gap: space.sm },

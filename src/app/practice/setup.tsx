@@ -48,6 +48,7 @@ export default function PracticeSetupScreen() {
                 accessibilityRole="checkbox"
                 accessibilityLabel={`${d.name}, ${d.weight}% of the exam`}
                 accessibilityState={{ checked: on }}
+                aria-checked={on}
                 onPress={() => toggle(d.id)}
                 style={[styles.topic, on && styles.topicOn]}>
                 <View style={[styles.box, on && styles.boxOn]}>{on && <Ionicons name="checkmark" size={18} color={colors.white} />}</View>
@@ -69,6 +70,7 @@ export default function PracticeSetupScreen() {
                   accessibilityRole="radio"
                   accessibilityLabel={`${n} questions`}
                   accessibilityState={{ checked: on }}
+                  aria-checked={on}
                   onPress={() => setConfig({ ...config, count: n })}
                   style={[styles.count, on && styles.countOn]}>
                   <Text style={[styles.countText, on && styles.countTextOn]}>{n}</Text>

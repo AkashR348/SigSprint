@@ -9,7 +9,7 @@ type Props<T extends string> = {
   onChange: (value: T) => void;
 };
 
-/** A choice of one from a few, side by side. */
+/** A choice of one from a few, side by side. `aria-checked` is what the web reads; the state alone reaches only phones. */
 export function Segmented<T extends string>({ label, options, value, onChange }: Props<T>) {
   return (
     <View style={styles.group}>
@@ -23,6 +23,7 @@ export function Segmented<T extends string>({ label, options, value, onChange }:
               accessibilityRole="radio"
               accessibilityLabel={`${label}, ${option.label}`}
               accessibilityState={{ checked: on }}
+              aria-checked={on}
               onPress={() => onChange(option.value)}
               style={[styles.option, on && styles.optionOn]}>
               <Text style={[styles.text, on && styles.textOn]}>{option.label}</Text>
