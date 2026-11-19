@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ModeTile } from '@/components/ModeTile';
+import { mockExam } from '@/content/domains';
 import { flashcardsTile } from '@/lib/flashcardText';
 import { colors, fonts, space } from '@/theme/tokens';
 
@@ -28,7 +29,15 @@ export default function StudyScreen() {
             onPress={() => router.push('/flashcards/setup')}
           />
         </View>
-        <Text style={styles.detail}>The mock exam is being built next.</Text>
+        <View style={styles.row}>
+          <ModeTile
+            title="Mock exam"
+            detail={`${mockExam.questions} questions in ${mockExam.minutes} minutes, or half`}
+            icon="timer"
+            iconColor={colors.blue}
+            onPress={() => router.push('/mock/setup')}
+          />
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -39,5 +48,4 @@ const styles = StyleSheet.create({
   content: { padding: space.xl, gap: space.lg },
   title: { fontFamily: fonts.black, fontSize: 26, color: colors.ink },
   row: { flexDirection: 'row', gap: space.md },
-  detail: { fontFamily: fonts.bold, fontSize: 16, lineHeight: 24, color: colors.muted },
 });
