@@ -5,7 +5,7 @@ import { starterQuestions } from './starterQuestions';
 const PRIMARY = ['www.ecfr.gov', 'dailymed.nlm.nih.gov', 'www.fda.gov', 'www.cdc.gov', 'www.osha.gov', 'www.nist.gov'];
 
 // Written so far; each rises to its share of the mock exam as that domain's questions are added.
-const COUNTS = { medications: 6, federal: 17, safety: 21, orderEntry: 20 } as const;
+const COUNTS = { medications: 32, federal: 17, safety: 21, orderEntry: 20 } as const;
 
 test('each exam domain has the number of questions written for it so far', () => {
   for (const d of domains) expect(starterQuestions.filter((q) => q.domain === d.id)).toHaveLength(COUNTS[d.id]);
@@ -13,7 +13,7 @@ test('each exam domain has the number of questions written for it so far', () =>
 });
 
 // Domains whose mock exam questions are all written.
-const FULL = ['federal', 'safety', 'orderEntry'] as const;
+const FULL = ['medications', 'federal', 'safety', 'orderEntry'] as const;
 
 test.each(FULL)('%s has its full share of the mock exam', (id) => {
   const share = allocateQuestions(mockExam.questions, domains.map((d) => d.id));
