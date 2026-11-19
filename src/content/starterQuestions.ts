@@ -20,11 +20,19 @@ const amoxicillin: Source = {
   url: 'https://dailymed.nlm.nih.gov/dailymed/lookup.cfm?setid=077f4a65-3cfb-4cb1-99f2-e27ffc5939c0',
 };
 const humulin = label('Humulin R (insulin human) injection', 'b519bd83-038c-4ec5-a231-a51ec5cc291f');
+const albuterolNeb = label('Albuterol sulfate inhalation solution 0.083%', '922bf33b-4d55-4c35-9f68-72efbb17c14f');
+const hydrocortisone = label('Hydrocortisone cream USP, 1% and 2.5%', 'a84830ad-73dc-4a2e-b987-0a1103526535');
 const part1306 = ecfr('1306', '21 CFR Part 1306, Prescriptions (DEA)');
 const ndc: Source = {
   title: 'FDA, National Drug Code Database Background Information',
   url: 'https://www.fda.gov/drugs/development-approval-process-drugs/national-drug-code-database-background-information',
 };
+
+const household: Source = {
+  title: 'FDA, Guidelines for Determining Metric Equivalents of Household Measures',
+  url: 'https://www.fda.gov/regulatory-information/search-fda-guidance-documents/guidance-industry-guidelines-determining-metric-equivalents-household-measures',
+};
+const prefixes: Source = { title: 'NIST, Metric (SI) Prefixes', url: 'https://www.nist.gov/pml/owm/metric-si-prefixes' };
 
 export const starterQuestions: readonly Question[] = [
   {
@@ -377,10 +385,7 @@ export const starterQuestions: readonly Question[] = [
     choices: ['2 teaspoons', '1 teaspoon', '3 teaspoons', '5 teaspoons'],
     answer: 0,
     explanation: '1 teaspoon is 5 mL, so 10 mL is 2 teaspoons.',
-    source: {
-      title: 'FDA, Guidelines for Determining Metric Equivalents of Household Measures',
-      url: 'https://www.fda.gov/regulatory-information/search-fda-guidance-documents/guidance-industry-guidelines-determining-metric-equivalents-household-measures',
-    },
+    source: household,
   },
   {
     id: 'ord-005',
@@ -401,6 +406,156 @@ export const starterQuestions: readonly Question[] = [
     source: {
       title: 'NIST, Metric Kitchen: Cooking Measurement Equivalencies',
       url: 'https://www.nist.gov/pml/owm/metric-si/metric-kitchen/metric-kitchen-cooking-measurement-equivalencies',
+    },
+  },
+  {
+    id: 'ord-007',
+    domain: 'orderEntry',
+    stem: 'A prescription reads: metformin 500 mg tablets, take 1 tablet twice a day with meals, quantity 180. How many days will it last?',
+    choices: ['30 days', '60 days', '180 days', '90 days'],
+    answer: 3,
+    explanation: 'Twice a day is 2 tablets a day, and 180 ÷ 2 = 90 days. The label gives 500 mg twice a day with meals as a starting dose.',
+    source: metformin,
+  },
+  {
+    id: 'ord-008',
+    domain: 'orderEntry',
+    stem: 'A prescription is for 4 fluid ounces of a liquid medicine. Using 1 fluid ounce = 30 mL, how many mL is that?',
+    choices: ['120 mL', '60 mL', '240 mL', '40 mL'],
+    answer: 0,
+    explanation: '4 × 30 mL = 120 mL. The FDA guideline gives 1 fluid ounce as 30 mL.',
+    source: household,
+  },
+  {
+    id: 'ord-009',
+    domain: 'orderEntry',
+    stem: 'The directions are 1 tablespoon twice a day for 10 days. How many mL are needed in all?',
+    choices: ['100 mL', '300 mL', '150 mL', '600 mL'],
+    answer: 1,
+    explanation: '1 tablespoon is 15 mL. Twice a day is 30 mL a day, and 30 mL × 10 days = 300 mL.',
+    source: household,
+  },
+  {
+    id: 'ord-010',
+    domain: 'orderEntry',
+    stem: 'Hydrocortisone cream 2.5% has 25 mg of hydrocortisone in each gram. How much hydrocortisone is in a 30 gram tube?',
+    choices: ['75 mg', '250 mg', '750 mg', '7.5 mg'],
+    answer: 2,
+    explanation: '25 mg in each gram × 30 grams = 750 mg. The label states that each gram of the 2.5% cream contains 25 mg of hydrocortisone.',
+    source: hydrocortisone,
+  },
+  {
+    id: 'ord-011',
+    domain: 'orderEntry',
+    stem: 'A patient uses one vial of albuterol inhalation solution (2.5 mg/3 mL) four times a day. How many vials are needed for 30 days?',
+    choices: ['30 vials', '60 vials', '90 vials', '120 vials'],
+    answer: 3,
+    explanation: '4 vials a day × 30 days = 120 vials. The label gives the usual dose as one vial three to four times daily.',
+    source: albuterolNeb,
+  },
+  {
+    id: 'ord-012',
+    domain: 'orderEntry',
+    stem: 'A prescription is written for levothyroxine 0.05 mg. The tablets are labeled in micrograms (mcg). Which strength is that?',
+    choices: ['50 mcg', '5 mcg', '500 mcg', '0.5 mcg'],
+    answer: 0,
+    explanation: 'A milligram is a thousandth of a gram and a microgram is a millionth, so 1 mg is 1,000 mcg. 0.05 × 1,000 = 50 mcg.',
+    source: prefixes,
+  },
+  {
+    id: 'ord-013',
+    domain: 'orderEntry',
+    stem: 'A 150 mL bottle of amoxicillin suspension is 250 mg/5 mL. How many grams of amoxicillin are in the full bottle?',
+    choices: ['0.75 g', '7.5 g', '75 g', '3.75 g'],
+    answer: 1,
+    explanation: '150 mL ÷ 5 mL = 30 doses of 250 mg, which is 7,500 mg. A milligram is a thousandth of a gram, so that is 7.5 g.',
+    source: prefixes,
+  },
+  {
+    id: 'ord-014',
+    domain: 'orderEntry',
+    stem: 'A package shows the 10-digit NDC 12345-678-09. Which is its 11-digit form, as used for billing?',
+    choices: ['12345-678-090', '01234-5678-09', '12345-0678-09', '12345-6780-09'],
+    answer: 2,
+    explanation: 'FDA: because of the 11-digit HIPAA standard, many programs pad the product code or package code with a leading zero. FDA gives 12345-0678-09 as the 11-digit form of 12345-678-09.',
+    source: ndc,
+  },
+  {
+    id: 'ord-015',
+    domain: 'orderEntry',
+    stem: 'What can be found from the lot number on a drug product?',
+    choices: [
+      'The price the pharmacy paid for it',
+      'The date the patient should finish it',
+      'The patient it was dispensed to',
+      'The complete history of how that batch was made, packed, held and distributed',
+    ],
+    answer: 3,
+    explanation: '21 CFR 210.3(b)(11): a lot number is a distinctive combination of letters, numbers or symbols from which the complete history of the manufacture, processing, packing, holding and distribution of a batch or lot can be determined.',
+    source: {
+      title: '21 CFR 210.3, Definitions (FDA current good manufacturing practice)',
+      url: 'https://www.ecfr.gov/current/title-21/chapter-I/subchapter-C/part-210/section-210.3',
+    },
+  },
+  {
+    id: 'ord-016',
+    domain: 'orderEntry',
+    stem: 'A patient picks up a vial of Humulin R U-100 insulin. Which syringe does its label say to use?',
+    choices: ['A U-100 insulin syringe', 'An oral syringe', 'A U-500 insulin syringe', 'Any 3 mL syringe'],
+    answer: 0,
+    explanation: 'The Humulin R U-100 label says to use it only with a U-100 syringe. A syringe marked for another strength gives the wrong dose.',
+    source: humulin,
+  },
+  {
+    id: 'ord-017',
+    domain: 'orderEntry',
+    stem: 'According to its label, an opened vial of Humulin R U-100 should be thrown away after how many days, even if insulin is left in it?',
+    choices: ['7 days', '31 days', '14 days', '90 days'],
+    answer: 1,
+    explanation: 'The label says to throw away all opened vials after 31 days, even if there is still insulin left in the vial.',
+    source: humulin,
+  },
+  {
+    id: 'ord-018',
+    domain: 'orderEntry',
+    stem: 'Albuterol sulfate inhalation solution 0.083% comes in 3 mL vials. Which device does the patient need to take it?',
+    choices: ['An insulin pen', 'An oral syringe', 'A nebulizer', 'A glucose meter'],
+    answer: 2,
+    explanation: 'The label says the solution is given by nebulization, with the nebulizer connected to a compressor, over about 5 to 15 minutes.',
+    source: albuterolNeb,
+  },
+  {
+    id: 'ord-019',
+    domain: 'orderEntry',
+    stem: 'A patient brings a bottle of tablets back to the pharmacy a week after picking it up. Under FDA policy, the pharmacy should:',
+    choices: [
+      'Return it to stock if the seal is not broken',
+      'Return it to stock if it has not expired',
+      'Relabel it for the next patient with the same prescription',
+      "Not return it to stock, because it has been out of the pharmacy's possession",
+    ],
+    answer: 3,
+    explanation: 'FDA CPG Sec. 460.300: a pharmacist should not return drug products to stock once they have been out of his possession, because there is no longer any assurance of their strength, quality, purity or identity.',
+    source: {
+      title: 'FDA, CPG Sec. 460.300 Return of Unused Prescription Drugs to Pharmacy Stock',
+      url: 'https://www.fda.gov/regulatory-information/search-fda-guidance-documents/cpg-sec-460300-return-unused-prescription-drugs-pharmacy-stock',
+    },
+  },
+  {
+    id: 'ord-020',
+    domain: 'orderEntry',
+    stem: 'A pharmacy sends expired controlled substances to a DEA-registered reverse distributor. What does the reverse distributor do with them?',
+    choices: [
+      'Returns them to the manufacturer or destroys them',
+      'Sells them to other pharmacies at a discount',
+      'Dispenses them to patients who cannot pay',
+      'Holds them until the pharmacy asks for them back',
+    ],
+    answer: 0,
+    explanation: '21 CFR 1317.15: a reverse distributor acquires controlled substances for timely destruction or prompt return to the registered manufacturer. What is to be destroyed must be destroyed no later than 30 calendar days after receipt.',
+    source: {
+      title: '21 CFR 1317.15, Reverse distributor registration requirements and authorized activities (DEA)',
+      url: 'https://www.ecfr.gov/current/title-21/chapter-II/part-1317/subpart-A/section-1317.15',
     },
   },
 ];
