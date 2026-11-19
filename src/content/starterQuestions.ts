@@ -368,7 +368,7 @@ export const starterQuestions: readonly Question[] = [
     id: 'fed-002',
     domain: 'federal',
     stem: 'Under federal rules, a prescription for a Schedule III or IV controlled substance may be refilled at most:',
-    choices: ['2 times within 30 days', '5 times within 12 months', '11 times within 12 months', '5 times within 6 months of the date it was issued'],
+    choices: ['2 times within 30 days', '5 times within 12 months', '11 times within 12 months', '5 times within 6 months'],
     answer: 3,
     explanation: '21 CFR 1306.22(a): it may not be filled or refilled more than six months after the date it was issued, and may not be refilled more than five times.',
     source: {
@@ -559,7 +559,7 @@ export const starterQuestions: readonly Question[] = [
     stem: 'Which FDA recall class is for a product with a reasonable probability of causing serious adverse health consequences or death?',
     choices: ['Class I', 'Class II', 'Class III', 'Class IV'],
     answer: 0,
-    explanation: 'Class I is the most serious. Class II covers temporary or medically reversible harm, and Class III a product not likely to cause adverse health consequences.',
+    explanation: 'FDA: Class I is a situation with a reasonable probability that the product will cause serious adverse health consequences or death. It is the most serious of the three recall classes.',
     source: {
       title: 'FDA, Recalls Background and Definitions',
       url: 'https://www.fda.gov/safety/industry-guidance-recalls/recalls-background-and-definitions',
@@ -571,7 +571,7 @@ export const starterQuestions: readonly Question[] = [
     stem: "What is the name of the FDA's safety information and adverse event reporting program for medicines?",
     choices: ['DailyMed', 'VAERS', 'MedWatch', 'REMS'],
     answer: 2,
-    explanation: 'MedWatch is the FDA Safety Information and Adverse Event Reporting Program. Health professionals can report voluntarily on Form FDA 3500.',
+    explanation: 'MedWatch is the FDA Safety Information and Adverse Event Reporting Program. Health professionals, patients and consumers can all send it voluntary reports.',
     source: {
       title: 'FDA, MedWatch Forms for FDA Safety Reporting',
       url: 'https://www.fda.gov/safety/medical-product-safety-information/medwatch-forms-fda-safety-reporting',
@@ -604,9 +604,9 @@ export const starterQuestions: readonly Question[] = [
     stem: "Under OSHA's Hazard Communication Standard, safety data sheets for hazardous chemicals in the pharmacy must be:",
     choices: [
       'Readily accessible to employees during each work shift',
-      'Reviewed with each employee once a year',
-      'Shown to employees only on written request',
-      'Kept on file at the head office',
+      'Reviewed with each employee at least once every year',
+      'Shown to an employee within one working day of a request',
+      'Kept on file at the company head office for inspection',
     ],
     answer: 0,
     explanation: '29 CFR 1910.1200(g)(8): the employer keeps the safety data sheets in the workplace and makes sure they are readily accessible to employees during each work shift. Electronic access is allowed.',
@@ -647,7 +647,7 @@ export const starterQuestions: readonly Question[] = [
   {
     id: 'saf-010',
     domain: 'safety',
-    stem: "FDA's tall man lettering list writes hydroxyzine as hydrOXYzine. Which look-alike name is it paired with?",
+    stem: "FDA's list of look-alike drug names writes hydroxyzine as hydrOXYzine. Which name is it paired with?",
     choices: ['Hydrocodone', 'Hydrochlorothiazide', 'Hydralazine', 'Hydrocortisone'],
     answer: 2,
     explanation: "FDA's list pairs hydrALAZINE with hydrOXYzine. The capital letters draw the eye to the part of each name that differs.",
@@ -734,8 +734,8 @@ export const starterQuestions: readonly Question[] = [
   {
     id: 'saf-017',
     domain: 'safety',
-    stem: 'Which form does a health professional use to report a serious problem with a medicine to MedWatch voluntarily?',
-    choices: ['Form FDA 3500', 'Form FDA 3500A', 'Form FDA 3500B', 'DEA Form 106'],
+    stem: 'Which form does a health professional use to report a serious problem with a medicine to FDA voluntarily?',
+    choices: ['Form FDA 3500', 'Form FDA 3500A', 'Form FDA 3500B', 'Form FDA 483'],
     answer: 0,
     explanation: 'Form FDA 3500 is the voluntary reporting form designed for healthcare professionals. Form FDA 3500B is the voluntary form for consumers and patients, and Form FDA 3500A is for mandatory reporting.',
     source: {
