@@ -94,4 +94,5 @@ test('the small lines read naturally for one and for many', () => {
   expect(inProgressLine('exam', 'full', 34, 90)).toBe('Exam-like · Full exam · 34 of 90 answered');
   expect(inProgressClock('exam', 5)).toBe('Its clock has kept running.');
   expect(inProgressClock('relaxed', 3_730_000)).toBe('Its clock is stopped with 1:02:10 left.');
+  expect(inProgressClock('exam', 0)).toBe('Its time has run out. Continue to see the result.');
 });

@@ -110,7 +110,9 @@ export function leaveBody(mode: ExamMode): string {
 export const warningNotice = 'Less than 10 minutes left.';
 export const progressUnsaved = "Your last change couldn't be saved on this phone. If the app closes, it may be lost.";
 export const resultSaving = 'Saving your result…';
-export const resultUnsaved = "This result couldn't be saved on this phone, so it isn't in your history, points or daily goal yet.";
+export const resultUnsaved =
+  "This result couldn't be saved on this phone, so it isn't in your history, points or daily goal yet, and the exam is still saved as in progress. The answers show once it is saved.";
+export const quitFailed = "The exam couldn't be quit on this phone, so it is still saved. You can try again.";
 export const examBroken = "This exam can't be continued, because its questions have changed since it started.";
 export const noExam = 'There is no mock exam in progress.';
 export const startFailed = "The exam couldn't be saved on this phone, so it didn't start. You can try again.";
@@ -135,6 +137,8 @@ export function inProgressLine(mode: ExamMode, length: ExamLength, answered: num
   return `${modeName[mode]} · ${lengthName[length]} · ${answered} of ${total} answered`;
 }
 
+/** `msLeft` is what the saved exam has left now, as `savedMsLeft` gives it. */
 export function inProgressClock(mode: ExamMode, msLeft: number): string {
+  if (msLeft <= 0) return 'Its time has run out. Continue to see the result.';
   return mode === 'exam' ? 'Its clock has kept running.' : `Its clock is stopped with ${examClock(msLeft / 1000)} left.`;
 }

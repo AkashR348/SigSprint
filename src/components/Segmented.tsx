@@ -4,7 +4,8 @@ import { colors, fonts, minTouch, radius, space } from '@/theme/tokens';
 
 type Props<T extends string> = {
   label: string;
-  options: readonly { value: T; label: string }[];
+  // `spoken` replaces `label` for a screen reader, where the label's punctuation would be read out.
+  options: readonly { value: T; label: string; spoken?: string }[];
   value: T;
   onChange: (value: T) => void;
 };
@@ -21,7 +22,7 @@ export function Segmented<T extends string>({ label, options, value, onChange }:
             <Pressable
               key={option.value}
               accessibilityRole="radio"
-              accessibilityLabel={`${label}, ${option.label}`}
+              accessibilityLabel={`${label}, ${option.spoken ?? option.label}`}
               accessibilityState={{ checked: on }}
               aria-checked={on}
               onPress={() => onChange(option.value)}

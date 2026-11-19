@@ -147,22 +147,25 @@ test('finishing adds the points and the answered questions once, keeps the resul
   const questions = resolveExam(exam, starterQuestions)!;
   const outcome = concludeExam(answered(exam, questions, 60, 20), questions, 0, false, NOW);
   const before = { ...startExam(freshProgress(), exam), xp: 30, days: { '2026-11-19': 4 } };
-  const after = finishExam(before, outcome, '2026-11-19')!;
+  const after = finishExam(before, exam, outcome, '2026-11-19')!;
   expect(after).toMatchObject({ xp: 530, days: { '2026-11-19': 84 } });
   expect(after.exam).toBeUndefined();
   expect(after.exams).toEqual([outcome.record]);
   expect(parseProgress(JSON.parse(JSON.stringify(after)))).toEqual(after);
   // A second finish has no exam to end, so nothing is counted twice.
-  expect(finishExam(after, outcome, '2026-11-19')).toBeNull();
-  expect(finishExam(before, outcome, 'today')).toBeNull();
+  expect(finishExam(after, exam, outcome, '2026-11-19')).toBeNull();
+  expect(finishExam(before, exam, outcome, 'today')).toBeNull();
+  // A late finish of one exam never ends another that took its place.
+  const other = { ...exam, ids: [...exam.ids].reverse() };
+  expect(finishExam(startExam(freshProgress(), other), exam, outcome, '2026-11-19')).toBeNull();
 });
 
 test('a losing exam stops the total at 0, and an exam with no answers adds no day', () => {
   const exam = full();
   const questions = resolveExam(exam, starterQuestions)!;
-  const lost = finishExam({ ...startExam(freshProgress(), exam), xp: 20 }, concludeExam(answered(exam, questions, 0, 30), questions, 0, false, NOW), '2026-11-19')!;
+  const lost = finishExam({ ...startExam(freshProgress(), exam), xp: 20 }, exam, concludeExam(answered(exam, questions, 0, 30), questions, 0, false, NOW), '2026-11-19')!;
   expect(lost.xp).toBe(0);
-  const blank = finishExam(startExam(freshProgress(), exam), concludeExam(exam, questions, 0, true, NOW), '2026-11-19')!;
+  const blank = finishExam(startExam(freshProgress(), exam), exam, concludeExam(exam, questions, 0, true, NOW), '2026-11-19')!;
   expect(blank.days).toEqual({});
   expect(blank.exams).toHaveLength(1);
 });
@@ -172,7 +175,7 @@ test('only the last 10 results are kept, newest first', () => {
   const questions = resolveExam(exam, starterQuestions)!;
   let progress = freshProgress();
   for (let i = 0; i < 12; i++) {
-    progress = finishExam(startExam(progress, exam), concludeExam(exam, questions, 0, false, NOW + i), '2026-11-19')!;
+    progress = finishExam(startExam(progress, exam), exam, concludeExam(exam, questions, 0, false, NOW + i), '2026-11-19')!;
   }
   expect(progress.exams?.map((r: ExamRecord) => r.at)).toEqual([11, 10, 9, 8, 7, 6, 5, 4, 3, 2].map((i) => NOW + i));
 });

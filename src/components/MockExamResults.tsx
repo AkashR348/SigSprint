@@ -60,11 +60,12 @@ export function MockExamResults({ questions, answers, outcome, save, onRetry, on
       </View>
 
       {estimate !== null && (
-        <View accessible style={styles.estimate}>
+        <View
+          accessible
+          accessibilityLabel={`${estimateTitle}, ${estimate}. ${estimateVerdict(estimate)} ${estimateCaveat}`}
+          style={styles.estimate}>
           <Text style={styles.estimateLabel}>{estimateTitle.toUpperCase()}</Text>
-          <Text accessibilityLabel={`${estimateTitle}, ${estimate}`} style={styles.estimateScore}>
-            {scoreLabel(estimate)}
-          </Text>
+          <Text style={styles.estimateScore}>{scoreLabel(estimate)}</Text>
           <Text style={styles.estimateText}>{estimateVerdict(estimate)}</Text>
           <Text style={styles.estimateText}>{estimateCaveat}</Text>
         </View>
@@ -92,12 +93,15 @@ export function MockExamResults({ questions, answers, outcome, save, onRetry, on
       <ChunkyButton label="New exam" onPress={onNewExam} />
       <ChunkyButton tone="plain" label="Done" onPress={onDone} />
 
-      <View style={styles.group}>
-        <Text accessibilityRole="header" style={styles.label}>REVIEW</Text>
-        {questions.map((q, i) => (
-          <QuestionReview key={q.id} number={i + 1} question={q} given={answers[i] ?? null} />
-        ))}
-      </View>
+      {/* Answers show only once the result is saved: an unsaved exam can still be continued. */}
+      {typeof save === 'object' && (
+        <View style={styles.group}>
+          <Text accessibilityRole="header" style={styles.label}>REVIEW</Text>
+          {questions.map((q, i) => (
+            <QuestionReview key={q.id} number={i + 1} question={q} given={answers[i] ?? null} />
+          ))}
+        </View>
+      )}
     </ScrollView>
   );
 }

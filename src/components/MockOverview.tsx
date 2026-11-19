@@ -111,8 +111,10 @@ const styles = StyleSheet.create({
   hint: { fontFamily: fonts.bold, fontSize: 15, color: colors.muted },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   cell: {
-    width: minTouch + 4,
-    height: minTouch + 4,
+    // A minimum, not a size, so large text grows the cell instead of clipping it.
+    minWidth: minTouch + 4,
+    minHeight: minTouch + 4,
+    padding: space.xs,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,

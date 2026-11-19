@@ -130,7 +130,8 @@ export function concludeExam(exam: SavedExam, questions: readonly Question[], ms
   return { result, record, points: examPoints(result), answered: result.total - result.unanswered };
 }
 
-const sameExam = (a: SavedExam, b: SavedExam) => a.ids.length === b.ids.length && a.ids.every((id, i) => id === b.ids[i]);
+/** True when both are the same exam: the same questions in the same order. */
+export const sameExam = (a: SavedExam, b: SavedExam) => a.ids.length === b.ids.length && a.ids.every((id, i) => id === b.ids[i]);
 
 /** Progress with a new exam in progress. Any exam already there is replaced, so ask first. */
 export function startExam(progress: Progress, exam: SavedExam): Progress {
@@ -156,9 +157,9 @@ export function quitExam(progress: Progress): Progress {
   return next;
 }
 
-/** Progress after the exam in progress ends: points and answered questions counted once, result kept. Null if none is in progress. */
-export function finishExam(progress: Progress, outcome: Outcome, today: string): Progress | null {
-  if (!progress.exam || !isDayKey(today)) return null;
+/** Progress after `exam` ends: points and answered questions counted once, result kept. Null unless it is the exam in progress. */
+export function finishExam(progress: Progress, exam: SavedExam, outcome: Outcome, today: string): Progress | null {
+  if (!progress.exam || !sameExam(progress.exam, exam) || !isDayKey(today)) return null;
   const next = quitExam(progress);
   next.xp = Math.max(0, progress.xp + outcome.points);
   if (outcome.answered > 0) next.days = { ...progress.days, [today]: answeredOn(progress.days, today) + outcome.answered };

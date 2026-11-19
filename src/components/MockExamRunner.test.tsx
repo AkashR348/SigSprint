@@ -300,13 +300,17 @@ test('a result that cannot be saved says so, shows no points, and can be tried a
   expect((await stored()).exams).toHaveLength(1);
 });
 
-test('an answer that cannot be saved is said so while the exam goes on', async () => {
+test('an answer that cannot be saved is said so, is not shown as given, and the exam goes on', async () => {
   await strict();
   jest.mocked(AsyncStorage.setItem).mockRejectedValueOnce(new Error('disk full'));
   await choose('D. one a');
   await settle();
   expect(screen.getByText(/Your last change couldn't be saved on this phone/)).toBeTruthy();
+  expect(screen.getByRole('radio', { name: 'D. one a' })).not.toBeChecked();
+  await choose('D. one a');
+  await settle();
   expect(screen.getByRole('radio', { name: 'D. one a' })).toBeChecked();
+  expect(screen.queryByText(/Your last change couldn't be saved on this phone/)).toBeNull();
 });
 
 test('no question is drawn before the clock has been read', async () => {
@@ -317,4 +321,74 @@ test('no question is drawn before the clock has been read', async () => {
   expect(screen.queryByRole('radio')).toBeNull();
   await settle();
   expect(screen.getAllByRole('radio')).toHaveLength(4);
+});
+
+test('a strict exam that ran out while away is dated, and counted, on the day its time ended', async () => {
+  const endedAt = new Date(2026, 10, 17, 20, 0).getTime();
+  await start({ ...exam('exam', endedAt), answers: [0, 1, null] });
+  await settle();
+  const saved = await stored();
+  expect(saved.exams?.[0]).toMatchObject({ at: endedAt, timedOut: true, correct: 2 });
+  expect(saved.days).toEqual({ '2026-11-17': 2 });
+});
+
+test('a quit that cannot be saved keeps the exam open and says so', async () => {
+  await strict();
+  await press('Close mock exam');
+  jest.mocked(AsyncStorage.setItem).mockRejectedValueOnce(new Error('disk full'));
+  await press('Quit exam');
+  await settle();
+  expect(onLeave).not.toHaveBeenCalled();
+  expect(screen.getByText(/The exam couldn't be quit on this phone/)).toBeTruthy();
+  expect((await stored()).exam).toBeDefined();
+  await press('Quit exam');
+  await settle();
+  expect(onLeave).toHaveBeenCalledTimes(1);
+  expect((await stored()).exam).toBeUndefined();
+});
+
+test('an unsaved result shows no answers, since the exam can still be continued', async () => {
+  await strict();
+  await choose('D. one a');
+  await press('Review and submit');
+  await press('Submit exam');
+  jest.mocked(AsyncStorage.setItem).mockRejectedValueOnce(new Error('disk full'));
+  await press('Submit anyway');
+  await settle();
+  expect(screen.getByText(/the exam is still saved as in progress/)).toBeTruthy();
+  expect(screen.queryByText('REVIEW')).toBeNull();
+  expect(screen.queryByText(/Correct answer/)).toBeNull();
+  await press('Try saving again');
+  await settle();
+  expect(screen.getByText('REVIEW')).toBeTruthy();
+});
+
+test("Android's back button while paused asks the question on the paused screen", async () => {
+  const listen = jest.spyOn(BackHandler, 'addEventListener');
+  await relaxed();
+  await press('Pause');
+  const onBack = listen.mock.calls[listen.mock.calls.length - 1][1] as unknown as () => boolean;
+  await act(async () => {
+    onBack();
+  });
+  expect(screen.getByText('Leave this exam?')).toBeTruthy();
+  expect(screen.queryByText('Stem one')).toBeNull();
+  await press('Keep going');
+  expect(screen.getByText('Paused')).toBeTruthy();
+});
+
+test('a relaxed exam opened again after using some time comes back paused, its clock as saved', async () => {
+  await start({ ...exam('relaxed', 1_800_000), answers: [2, null, null] });
+  expect(screen.getByText('Paused')).toBeTruthy();
+  expect(screen.getByText('30:00')).toBeTruthy();
+  await act(async () => {
+    await jest.advanceTimersByTimeAsync(60_000);
+  });
+  expect(screen.getByText('30:00')).toBeTruthy();
+  await press('Resume');
+  await act(async () => {
+    jest.advanceTimersByTime(1000);
+  });
+  expect(screen.getByText('Stem one')).toBeTruthy();
+  expect(screen.getByText('29:59')).toBeTruthy();
 });

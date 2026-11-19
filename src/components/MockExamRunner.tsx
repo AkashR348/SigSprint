@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { type ComponentRef, useEffect, useRef, useState } from 'react';
+import { type ComponentRef, useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { AccessibilityInfo, AppState, BackHandler, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ChunkyButton } from '@/components/ChunkyButton';
@@ -17,15 +17,17 @@ import {
   goTo,
   keepClock,
   keepExam,
+  limitSeconds,
   quitExam,
+  sameExam,
   toggleFlag,
   WARNING_SECONDS,
   type Outcome,
 } from '@/lib/mockExam';
 import type { SavedExam } from '@/lib/mockSave';
-import { examClock, examClockSpoken, leaveBody, progressUnsaved, warningNotice } from '@/lib/mockText';
+import { examClock, examClockSpoken, leaveBody, progressUnsaved, quitFailed, warningNotice } from '@/lib/mockText';
 import { dayKey } from '@/lib/progress';
-import { updateProgress } from '@/lib/progressStore';
+import { getProgressState, subscribeProgress, updateProgress } from '@/lib/progressStore';
 import { useAnnounce } from '@/lib/useAnnounce';
 import { colors, edge as edges, fonts, minTouch, radius, space } from '@/theme/tokens';
 
@@ -37,19 +39,24 @@ type Props = {
   onNewExam: () => void;
 };
 
-type Session = { exam: SavedExam; outcome: Outcome | null };
+// The exam as it was when it ended, kept once the save no longer holds it.
+type Ended = { exam: SavedExam; outcome: Outcome };
 type Showing = 'question' | 'overview';
 const LETTERS = ['A', 'B', 'C', 'D'];
 
 /** Runs one mock exam from where it was saved to its results. */
 export function MockExamRunner({ saved, questions, onLeave, onNewExam }: Props) {
   const relaxed = saved.mode === 'relaxed';
-  const [session, setSession] = useState<Session>({ exam: saved, outcome: null });
+  const state = useSyncExternalStore(subscribeProgress, getProgressState, getProgressState);
+  const [ended, setEnded] = useState<Ended | null>(null);
   const [view, setView] = useState<Showing>('question');
-  const [paused, setPaused] = useState(false);
+  // A relaxed exam that has used some of its time comes back paused, its clock read from the save.
+  const [startPaused] = useState(() => relaxed && saved.clock < limitSeconds(saved.length) * 1000);
+  const [paused, setPaused] = useState(startPaused);
+  const [quitError, setQuitError] = useState(false);
   const [leaving, setLeaving] = useState(false);
   // Seconds left; null until the clock's first tick.
-  const [left, setLeft] = useState<number | null>(null);
+  const [left, setLeft] = useState<number | null>(startPaused ? Math.ceil(saved.clock / 1000) : null);
   const [unsaved, setUnsaved] = useState(false);
   const [resultSave, setResultSave] = useState<ResultSave>('saving');
   const [attempt, setAttempt] = useState(0);
@@ -58,8 +65,26 @@ export function MockExamRunner({ saved, questions, onLeave, onNewExam }: Props) 
   const leaveTitle = useRef<ComponentRef<typeof Text>>(null);
   const pausedTitle = useRef<ComponentRef<typeof Text>>(null);
 
-  const { exam, outcome } = session;
+  // What is on screen is what the phone holds, so nothing shows before it is saved.
+  const inStore = state.status === 'ready' ? state.progress.exam : undefined;
+  const live = inStore && sameExam(inStore, saved) ? inStore : saved;
+  const exam = ended?.exam ?? live;
+  const outcome = ended?.outcome ?? null;
+  // The clock and submit read the exam as last drawn.
+  const latest = useRef(exam);
+  useEffect(() => {
+    latest.current = exam;
+  });
   const running = outcome === null && !paused;
+  const { mode, clock } = saved;
+  const end = useCallback(
+    (ms: number, timedOut: boolean, now: number) => {
+      // A strict exam that ran out while away ended at its end time, not when it was opened again.
+      const at = mode === 'exam' ? Math.min(now, clock) : now;
+      setEnded((e) => e ?? { exam: latest.current, outcome: concludeExam(latest.current, questions, ms, timedOut, at) });
+    },
+    [mode, clock, questions],
+  );
 
   // Read from the timer's own end time, so a strict exam's time in the background still passes.
   useEffect(() => {
@@ -70,7 +95,7 @@ export function MockExamRunner({ saved, questions, onLeave, onNewExam }: Props) 
       const ms = timer.msLeft();
       const now = timer.now();
       setLeft(Math.ceil(ms / 1000));
-      if (ms <= 0) setSession((s) => (s.outcome ? s : { ...s, outcome: concludeExam(s.exam, questions, 0, true, now) }));
+      if (ms <= 0) end(0, true, now);
     };
     const first = setTimeout(tick, 0);
     const every = setInterval(tick, 500);
@@ -79,7 +104,7 @@ export function MockExamRunner({ saved, questions, onLeave, onNewExam }: Props) 
       clearInterval(every);
       timer.stop();
     };
-  }, [running, timer, questions]);
+  }, [running, timer, end]);
 
   // A relaxed exam stops its clock the moment the app is left, and comes back paused.
   useEffect(() => {
@@ -100,7 +125,7 @@ export function MockExamRunner({ saved, questions, onLeave, onNewExam }: Props) 
     let change = 0;
     let live = true;
     void updateProgress((p) => {
-      const after = finishExam(p, outcome, dayKey(new Date(outcome.record.at)));
+      const after = finishExam(p, saved, outcome, dayKey(new Date(outcome.record.at)));
       if (after) change = after.xp - p.xp;
       return after;
     }).then((ok) => {
@@ -109,7 +134,7 @@ export function MockExamRunner({ saved, questions, onLeave, onNewExam }: Props) 
     return () => {
       live = false;
     };
-  }, [outcome, attempt]);
+  }, [outcome, attempt, saved]);
 
   const active = outcome === null;
   // Android's back button asks before leaving, like the close button.
@@ -137,6 +162,7 @@ export function MockExamRunner({ saved, questions, onLeave, onNewExam }: Props) 
   const warned = active && left !== null && left <= WARNING_SECONDS;
   useAnnounce(warned ? warningNotice : null);
   useAnnounce(unsaved && active ? progressUnsaved : null);
+  useAnnounce(quitError && active ? quitFailed : null);
 
   const index = exam.index;
   const onQuestion = active && view === 'question' && !paused;
@@ -165,18 +191,20 @@ export function MockExamRunner({ saved, questions, onLeave, onNewExam }: Props) 
   // Nothing is drawn until the clock has been read once, so an exam that ran out never shows a question.
   if (left === null || !question) return <View style={styles.screen} />;
 
-  // Every change goes to the phone at once, with the relaxed clock as it stands.
-  const apply = (next: SavedExam) => {
-    if (next === exam) return;
-    setSession({ exam: next, outcome: null });
-    const toSave = relaxed ? { ...next, clock: Math.floor(timer.msLeft()) } : next;
-    void updateProgress((p) => keepExam(p, toSave)).then((ok) => setUnsaved(!ok));
+  // Every change goes to the phone at once, with the relaxed clock as it stands, and shows once saved.
+  const apply = (change: (current: SavedExam) => SavedExam) => {
+    const ms = Math.floor(timer.msLeft());
+    void updateProgress((p) => {
+      if (!p.exam || !sameExam(p.exam, saved)) return null;
+      const next = change(p.exam);
+      return keepExam(p, relaxed ? { ...next, clock: ms } : next);
+    }).then((ok) => setUnsaved(!ok));
   };
   const submit = () => {
     const now = timer.now();
     const ms = timer.msLeft();
     // The clock ticks twice a second; a submit after the end is a time out.
-    setSession((s) => (s.outcome ? s : { ...s, outcome: concludeExam(s.exam, questions, ms, ms <= 0, now) }));
+    end(ms, ms <= 0, now);
   };
   const pause = () => {
     timer.stop();
@@ -190,15 +218,39 @@ export function MockExamRunner({ saved, questions, onLeave, onNewExam }: Props) 
     if (relaxed) void updateProgress((p) => keepClock(p, ms));
     onLeave();
   };
+  // Leaves only once the quit is saved, so a failed quit never looks done.
   const quit = () => {
-    void updateProgress((p) => (p.exam ? quitExam(p) : null));
-    onLeave();
+    void updateProgress((p) => (p.exam && sameExam(p.exam, saved) ? quitExam(p) : null)).then((ok) => {
+      if (ok) onLeave();
+      else setQuitError(true);
+    });
   };
 
   const total = questions.length;
   const given = exam.answers[index] ?? null;
   const flagged = exam.flagged.includes(index);
   const isLast = index === total - 1;
+
+  const leaveSheet = (
+    <View style={styles.footer}>
+      <Text ref={leaveTitle} accessibilityRole="header" style={styles.leaveTitle}>
+        Leave this exam?
+      </Text>
+      <Text style={styles.body}>{leaveBody(exam.mode)}</Text>
+      <ChunkyButton label="Keep going" onPress={() => {
+          setLeaving(false);
+          setQuitError(false);
+        }}
+      />
+      <ChunkyButton tone="plain" label="Leave and come back later" onPress={leaveForNow} />
+      {quitError && (
+        <Text accessibilityLiveRegion="polite" style={styles.notice}>
+          {quitFailed}
+        </Text>
+      )}
+      <ChunkyButton tone="plain" label="Quit exam" onPress={quit} />
+    </View>
+  );
 
   if (paused) {
     return (
@@ -210,8 +262,14 @@ export function MockExamRunner({ saved, questions, onLeave, onNewExam }: Props) 
         <Text accessibilityLabel={examClockSpoken(left)} style={styles.pausedClock}>
           {examClock(left)}
         </Text>
-        <ChunkyButton label="Resume" onPress={() => setPaused(false)} />
-        <ChunkyButton tone="plain" label="Leave and come back later" onPress={leaveForNow} />
+        {leaving ? (
+          leaveSheet
+        ) : (
+          <>
+            <ChunkyButton label="Resume" onPress={() => setPaused(false)} />
+            <ChunkyButton tone="plain" label="Leave and come back later" onPress={leaveForNow} />
+          </>
+        )}
       </View>
     );
   }
@@ -243,18 +301,6 @@ export function MockExamRunner({ saved, questions, onLeave, onNewExam }: Props) 
       )}
     </>
   );
-  const leaveSheet = (
-    <View style={styles.footer}>
-      <Text ref={leaveTitle} accessibilityRole="header" style={styles.leaveTitle}>
-        Leave this exam?
-      </Text>
-      <Text style={styles.body}>{leaveBody(exam.mode)}</Text>
-      <ChunkyButton label="Keep going" onPress={() => setLeaving(false)} />
-      <ChunkyButton tone="plain" label="Leave and come back later" onPress={leaveForNow} />
-      <ChunkyButton tone="plain" label="Quit exam" onPress={quit} />
-    </View>
-  );
-
   if (view === 'overview') {
     return (
       <MockOverview
@@ -264,7 +310,7 @@ export function MockExamRunner({ saved, questions, onLeave, onNewExam }: Props) 
         leaveSheet={leaving ? leaveSheet : null}
         onClose={() => setLeaving(true)}
         onOpen={(at) => {
-          apply(goTo(exam, at));
+          apply((e) => goTo(e, at));
           setView('question');
         }}
         onBack={() => setView('question')}
@@ -308,7 +354,7 @@ export function MockExamRunner({ saved, questions, onLeave, onNewExam }: Props) 
                 accessibilityLabel={`${LETTERS[i]}. ${question.choices[stored]}`}
                 accessibilityState={{ checked: on }}
                 aria-checked={on}
-                onPress={() => apply(answerCurrent(exam, stored))}
+                onPress={() => apply((e) => answerCurrent(e, stored))}
                 style={[styles.choice, on && styles.choiceOn]}>
                 <View style={[styles.letter, on && styles.letterOn]}>
                   <Text style={[styles.letterText, on && styles.letterTextOn]}>{LETTERS[i]}</Text>
@@ -324,7 +370,7 @@ export function MockExamRunner({ saved, questions, onLeave, onNewExam }: Props) 
           accessibilityLabel="Flag this question for review"
           accessibilityState={{ checked: flagged }}
           aria-checked={flagged}
-          onPress={() => apply(toggleFlag(exam))}
+          onPress={() => apply(toggleFlag)}
           style={[styles.tool, styles.flag, flagged && styles.flagOn]}>
           <Ionicons name={flagged ? 'flag' : 'flag-outline'} size={18} color={colors.ink} />
           <Text style={styles.toolText}>{flagged ? 'Flagged for review' : 'Flag for review'}</Text>
@@ -337,10 +383,10 @@ export function MockExamRunner({ saved, questions, onLeave, onNewExam }: Props) 
         <View style={styles.footer}>
           <View style={styles.pair}>
             <View style={styles.half}>
-              <ChunkyButton tone="plain" label="Back" disabled={index === 0} onPress={() => apply(goTo(exam, index - 1))} />
+              <ChunkyButton tone="plain" label="Back" disabled={index === 0} onPress={() => apply((e) => goTo(e, index - 1))} />
             </View>
             <View style={styles.half}>
-              <ChunkyButton label="Next" disabled={isLast} onPress={() => apply(goTo(exam, index + 1))} />
+              <ChunkyButton label="Next" disabled={isLast} onPress={() => apply((e) => goTo(e, index + 1))} />
             </View>
           </View>
           <ChunkyButton tone={isLast ? 'green' : 'plain'} label="Review and submit" onPress={() => setView('overview')} />

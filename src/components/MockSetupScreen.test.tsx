@@ -44,7 +44,7 @@ test('the setup screen states the rules for the mode and length chosen', async (
   expect(screen.getByText('The clock never stops, even if you leave the app. There is no pause.')).toBeTruthy();
   expect(screen.getByText(/every full exam has the same 90 questions in a new order/)).toBeTruthy();
   await fireEvent.press(screen.getByRole('radio', { name: 'Mode, Relaxed' }));
-  await fireEvent.press(screen.getByRole('radio', { name: 'Length, Half · 45' }));
+  await fireEvent.press(screen.getByRole('radio', { name: 'Length, Half, 45 questions' }));
   expect(screen.getByText('45 questions in 55 minutes, weighted like the real exam.')).toBeTruthy();
   expect(screen.getByText(/You can pause, which hides the question/)).toBeTruthy();
   expect(await screen.findByText('No finished mock exams yet.')).toBeTruthy();
@@ -53,7 +53,7 @@ test('the setup screen states the rules for the mode and length chosen', async (
 test('starting saves the exam chosen, then opens it', async () => {
   await render(<MockSetupScreen />);
   await fireEvent.press(screen.getByRole('radio', { name: 'Mode, Relaxed' }));
-  await fireEvent.press(screen.getByRole('radio', { name: 'Length, Half · 45' }));
+  await fireEvent.press(screen.getByRole('radio', { name: 'Length, Half, 45 questions' }));
   await waitFor(() => expect(screen.getByRole('button', { name: 'Start exam' })).toBeEnabled());
   await press('Start exam');
   await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/mock/run'));
@@ -88,6 +88,20 @@ test('with an exam in progress the screen offers to continue it or quit it, not 
   const saved = await stored();
   expect(saved.exam).toBeUndefined();
   expect(saved.xp).toBe(40);
+});
+
+test('a quit that cannot be saved says so and keeps the question open', async () => {
+  const exam = drawExam(starterQuestions, 'exam', 'half', Date.now() - 2 * 3600_000)!;
+  await seed({ exam });
+  await render(<MockSetupScreen />);
+  // A strict exam's time has kept running out while the app was closed.
+  expect(await screen.findByText('Its time has run out. Continue to see the result.')).toBeTruthy();
+  await press('Quit exam');
+  jest.mocked(AsyncStorage.setItem).mockRejectedValueOnce(new Error('disk full'));
+  await press('Yes, quit exam');
+  expect(await screen.findByText(/The exam couldn't be quit on this phone/)).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Yes, quit exam' })).toBeTruthy();
+  expect((await stored()).exam).toBeDefined();
 });
 
 test('past results are listed with their mode, length, score and estimate', async () => {

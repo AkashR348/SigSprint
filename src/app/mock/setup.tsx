@@ -10,9 +10,9 @@ import { SaveNotice } from '@/components/SaveNotice';
 import { Segmented } from '@/components/Segmented';
 import { starterQuestions } from '@/content/starterQuestions';
 import { focusOn } from '@/lib/focusOn';
-import { drawExam, examCounts, quitExam, startExam } from '@/lib/mockExam';
+import { drawExam, examCounts, quitExam, savedMsLeft, startExam } from '@/lib/mockExam';
 import type { ExamLength, ExamMode } from '@/lib/mockSave';
-import { examRules, inProgressClock, inProgressLine, needsProgress, startFailed } from '@/lib/mockText';
+import { examRules, inProgressClock, inProgressLine, needsProgress, quitFailed, startFailed } from '@/lib/mockText';
 import { getProgressState, loadProgress, subscribeProgress, updateProgress } from '@/lib/progressStore';
 import { useAnnounce } from '@/lib/useAnnounce';
 import { colors, fonts, radius, space } from '@/theme/tokens';
@@ -26,7 +26,10 @@ export default function MockSetupScreen() {
   const [starting, setStarting] = useState(false);
   // Quitting takes two taps: ask, then agree.
   const [quitting, setQuitting] = useState(false);
+  const [quitError, setQuitError] = useState(false);
   const quitText = useRef<ComponentRef<typeof Text>>(null);
+  // A strict exam's clock runs on, so the card checks whether its time has run out.
+  const [now, setNow] = useState(Date.now);
 
   useEffect(() => {
     void loadProgress();
@@ -38,9 +41,16 @@ export default function MockSetupScreen() {
     focusOn(quitText.current);
   }, [quitting]);
   useAnnounce(failed ? startFailed : null);
+  useAnnounce(quitError ? quitFailed : null);
 
   const ready = state.status === 'ready';
   const current = ready ? state.progress.exam : undefined;
+  const strictRunning = current?.mode === 'exam';
+  useEffect(() => {
+    if (!strictRunning) return;
+    const every = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(every);
+  }, [strictRunning]);
   const records = ready ? (state.progress.exams ?? []) : null;
 
   const start = () => {
@@ -55,7 +65,10 @@ export default function MockSetupScreen() {
     });
   };
   const quit = () => {
-    void updateProgress((p) => (p.exam ? quitExam(p) : null)).then(() => setQuitting(false));
+    void updateProgress((p) => (p.exam ? quitExam(p) : null)).then((ok) => {
+      setQuitError(!ok);
+      if (ok) setQuitting(false);
+    });
   };
 
   return (
@@ -72,14 +85,26 @@ export default function MockSetupScreen() {
           <View style={styles.card}>
             <Text accessibilityRole="header" style={styles.cardTitle}>Exam in progress</Text>
             <Text style={styles.body}>{inProgressLine(current.mode, current.length, examCounts(current).answered, current.ids.length)}</Text>
-            <Text style={styles.body}>{inProgressClock(current.mode, current.clock)}</Text>
+            <Text style={styles.body}>{inProgressClock(current.mode, savedMsLeft(current, now))}</Text>
             {quitting ? (
               <>
                 <Text ref={quitText} accessible style={styles.body}>
                   Quit this exam? Nothing from it will count.
                 </Text>
+                {quitError && (
+                  <Text accessibilityLiveRegion="polite" style={styles.body}>
+                    {quitFailed}
+                  </Text>
+                )}
                 <ChunkyButton label="Yes, quit exam" onPress={quit} />
-                <ChunkyButton tone="plain" label="Cancel" onPress={() => setQuitting(false)} />
+                <ChunkyButton
+                  tone="plain"
+                  label="Cancel"
+                  onPress={() => {
+                    setQuitting(false);
+                    setQuitError(false);
+                  }}
+                />
               </>
             ) : (
               <>
@@ -99,7 +124,10 @@ export default function MockSetupScreen() {
             <Segmented
               label="Length"
               value={length}
-              options={[{ value: 'full', label: 'Full · 90' }, { value: 'half', label: 'Half · 45' }]}
+              options={[
+                { value: 'full', label: 'Full · 90', spoken: 'Full, 90 questions' },
+                { value: 'half', label: 'Half · 45', spoken: 'Half, 45 questions' },
+              ]}
               onChange={setLength}
             />
             <View style={styles.group}>
