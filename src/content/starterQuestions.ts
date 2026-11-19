@@ -155,7 +155,7 @@ export const starterQuestions: readonly Question[] = [
   {
     id: 'fed-008',
     domain: 'federal',
-    stem: 'A pharmacist cannot supply the full quantity of a Schedule II prescription and fills part of it. Under 21 CFR 1306.13(a), the rest may be filled within:',
+    stem: 'A pharmacist does not have the full quantity of a Schedule II prescription in stock and fills part of it. Under federal rules, the rest may be filled within:',
     choices: ['24 hours', '7 days', '72 hours', '6 months'],
     answer: 2,
     explanation: '21 CFR 1306.13(a): the remaining portion may be filled within 72 hours of the first partial filling. Past 72 hours, no more may be supplied without a new prescription.',
@@ -217,16 +217,17 @@ export const starterQuestions: readonly Question[] = [
     domain: 'federal',
     stem: 'Under EPA rules, what may a pharmacy not do with hazardous waste pharmaceuticals?',
     choices: [
-      'Send them to a reverse distributor',
+      'Send potentially creditable ones to a reverse distributor',
       'Flush them into a sewer system that leads to a public treatment works',
       'Keep them apart from other waste',
-      'Label their container as hazardous waste',
+      'Label their container "Hazardous Waste Pharmaceuticals"',
     ],
     answer: 1,
-    explanation: '40 CFR 266.505: healthcare facilities and reverse distributors are prohibited from discharging hazardous waste pharmaceuticals to a sewer system that passes through to a publicly-owned treatment works.',
+    explanation:
+      '40 CFR 266.505: healthcare facilities are prohibited from discharging hazardous waste pharmaceuticals to a sewer system that passes through to a publicly-owned treatment works. Potentially creditable ones may go to a reverse distributor (266.503(c)), and containers are labeled "Hazardous Waste Pharmaceuticals" (266.502(e)).',
     source: {
-      title: '40 CFR 266.505, Prohibition on sewering hazardous waste pharmaceuticals (EPA)',
-      url: 'https://www.ecfr.gov/current/title-40/chapter-I/subchapter-I/part-266/subpart-P/section-266.505',
+      title: '40 CFR Part 266 Subpart P, Hazardous Waste Pharmaceuticals (EPA)',
+      url: 'https://www.ecfr.gov/current/title-40/chapter-I/subchapter-I/part-266/subpart-P',
     },
   },
   {
@@ -252,7 +253,7 @@ export const starterQuestions: readonly Question[] = [
     stem: 'A recalled product is not likely to cause adverse health consequences. Which FDA recall class is that?',
     choices: ['Class III', 'Class I', 'Class II', 'Class IV'],
     answer: 0,
-    explanation: '21 CFR 7.3(m): Class III is a situation in which use of, or exposure to, a violative product is not likely to cause adverse health consequences. FDA has three classes: I, II and III.',
+    explanation: '21 CFR 7.3(m)(3): Class III is a situation in which use of, or exposure to, a violative product is not likely to cause adverse health consequences. FDA has three classes: I, II and III.',
     source: {
       title: '21 CFR 7.3, Definitions (FDA enforcement policy)',
       url: 'https://www.ecfr.gov/current/title-21/chapter-I/subchapter-A/part-7/subpart-A/section-7.3',
@@ -264,10 +265,11 @@ export const starterQuestions: readonly Question[] = [
     stem: 'Under the Drug Supply Chain Security Act (DSCSA), the product identifier on a prescription drug package includes the lot number, the expiration date, the National Drug Code and:',
     choices: ['The wholesale price', 'A serial number', "The pharmacy's DEA number", "The patient's name"],
     answer: 1,
-    explanation: "FDA: the product identifier is a unique identity for individual prescription drug packages and cases. It includes the product's lot number, expiration date, National Drug Code and a serial number.",
+    explanation:
+      'FDA guidance: the product identifier carries the standardized numerical identifier, the lot number and the expiration date. The standardized numerical identifier is the NDC combined with a unique serial number of up to 20 characters.',
     source: {
-      title: 'FDA, Product Identifier Requirements Under the Drug Supply Chain Security Act',
-      url: 'https://www.fda.gov/drugs/drug-supply-chain-security-act-dscsa/fda-issues-draft-guidance-product-identifier-requirements-under-drug-supply-chain-security-act',
+      title: 'FDA, Product Identifiers Under the Drug Supply Chain Security Act: Questions and Answers (guidance, June 2021)',
+      url: 'https://www.fda.gov/media/116304/download',
     },
   },
   {

@@ -1,15 +1,20 @@
-import { domains } from './domains';
+import { allocateQuestions, domains, mockExam } from './domains';
 import { starterQuestions } from './starterQuestions';
 
 // Rule 7: the sites whose own pages were read to confirm each answer.
 const PRIMARY = ['www.ecfr.gov', 'dailymed.nlm.nih.gov', 'www.fda.gov', 'www.cdc.gov', 'www.osha.gov', 'www.nist.gov'];
 
-// Grows toward the mock exam's 32, 17, 21 and 20 as each domain's questions are written.
+// Written so far; each rises to its share of the mock exam as that domain's questions are added.
 const COUNTS = { medications: 6, federal: 17, safety: 6, orderEntry: 6 } as const;
 
 test('each exam domain has the number of questions written for it so far', () => {
   for (const d of domains) expect(starterQuestions.filter((q) => q.domain === d.id)).toHaveLength(COUNTS[d.id]);
   expect(starterQuestions).toHaveLength(Object.values(COUNTS).reduce((sum, n) => sum + n, 0));
+});
+
+test('federal has its full share of the mock exam', () => {
+  const share = allocateQuestions(mockExam.questions, domains.map((d) => d.id));
+  expect(COUNTS.federal).toBeGreaterThanOrEqual(share.federal);
 });
 
 test('every question has its own id and stem', () => {
