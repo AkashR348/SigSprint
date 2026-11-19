@@ -31,8 +31,9 @@ this SDK; read it before touching an Expo or React Native API.
 7. **Every question has one clearly correct answer and a stored source.** A question that cannot be
    confirmed against a primary source (FDA label, DEA rule, the PTCB outline), or where two answers
    could be argued, is dropped. Third-party practice questions are never copied or reworded.
-   `starterQuestions.test.ts` checks that each stores a source on a primary site; only reading the
-   source checks the answer itself. A sum cites the source of the fact it uses. A drug card
+   `starterQuestions.test.ts` checks that each stores a source on a primary site, that no answer is
+   the longest choice by more than two letters, and that no question's text or source pairs a brand
+   and generic another question asks for; only reading the source checks the answer itself. A sum cites the source of the fact it uses. A drug card
    (`src/content/drugCards.ts`) is held to the same rule against its FDA label, and carries a memory
    trick only for a name stem in the cited stem list; `drugCards.test.ts` checks both sources. A
    boxed warning card (`src/content/boxedWarnings.ts`) exists only where that label's Highlights

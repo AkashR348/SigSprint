@@ -15,6 +15,11 @@ function card(slug: string): Source {
   return drug.source;
 }
 
+// The same label titled by its generic, so a brand-name question isn't answered by another's source.
+function byGeneric(slug: string): Source {
+  return { ...card(slug), title: `${slug.charAt(0).toUpperCase()}${slug.slice(1)} label, DailyMed` };
+}
+
 const lipitor = label('Lipitor (atorvastatin calcium) tablets', 'a60cc18b-0631-4cf0-b021-9f52224ece65');
 const lisinopril = label('Lisinopril tablets', 'b62815f3-77fc-4074-a28a-918ab5cc32db');
 const metformin = label('Metformin hydrochloride tablets', 'a7999fa7-886f-33c7-e053-2995a90aa3f5');
@@ -65,7 +70,7 @@ export const starterQuestions: readonly Question[] = [
     id: 'med-002',
     domain: 'medications',
     stem: 'Lisinopril belongs to which drug class?',
-    choices: ['Angiotensin II receptor blocker (ARB)', 'Beta-adrenergic blocker', 'Angiotensin converting enzyme (ACE) inhibitor', 'Calcium channel blocker'],
+    choices: ['Angiotensin II receptor blocker (ARB)', 'Beta-adrenergic blocker (beta blocker)', 'Angiotensin converting enzyme (ACE) inhibitor', 'Dihydropyridine calcium channel blocker (CCB)'],
     answer: 2,
     explanation: 'The label describes lisinopril as an angiotensin converting enzyme (ACE) inhibitor, used for high blood pressure, heart failure and after a heart attack.',
     source: lisinopril,
@@ -243,8 +248,8 @@ export const starterQuestions: readonly Question[] = [
     stem: 'Zolpidem is used for the short-term treatment of which condition?',
     choices: ['Insomnia', 'Generalized anxiety disorder', 'Panic disorder', 'Seizures'],
     answer: 0,
-    explanation: 'The Ambien label: short-term treatment of insomnia characterized by difficulty with sleep initiation.',
-    source: card('zolpidem'),
+    explanation: 'The zolpidem label: short-term treatment of insomnia characterized by difficulty with sleep initiation.',
+    source: byGeneric('zolpidem'),
   },
   {
     id: 'med-022',
@@ -273,10 +278,10 @@ export const starterQuestions: readonly Question[] = [
     id: 'med-024',
     domain: 'medications',
     stem: 'Which adverse reaction does the amlodipine label list as its most common?',
-    choices: ['Cough', 'Muscle pain', 'Constipation', 'Swelling (edema)'],
+    choices: ['Cough', 'Muscle pain (myalgia)', 'Constipation', 'Swelling (edema)'],
     answer: 3,
-    explanation: 'The Norvasc label gives edema as the most common adverse reaction to amlodipine.',
-    source: card('amlodipine'),
+    explanation: 'The amlodipine label gives edema as its most common adverse reaction.',
+    source: byGeneric('amlodipine'),
   },
   {
     id: 'med-025',
@@ -284,8 +289,8 @@ export const starterQuestions: readonly Question[] = [
     stem: 'The boxed warning on apixaban says that stopping it early increases the risk of what?',
     choices: ['Blood clots, such as stroke', 'Major bleeding', 'Rebound high blood pressure', 'Withdrawal seizures'],
     answer: 0,
-    explanation: 'The Eliquis boxed warning: premature discontinuation of any oral anticoagulant increases the risk of thrombotic events (blood clots), such as stroke. It also warns of spinal or epidural hematoma.',
-    source: card('apixaban'),
+    explanation: 'The apixaban boxed warning: premature discontinuation of any oral anticoagulant increases the risk of thrombotic events (blood clots), such as stroke. It also warns of spinal or epidural hematoma.',
+    source: byGeneric('apixaban'),
   },
   {
     id: 'med-026',
@@ -293,8 +298,8 @@ export const starterQuestions: readonly Question[] = [
     stem: 'The sertraline label warns about all of these. Which one is its boxed warning?',
     choices: ['Serotonin syndrome', 'QTc prolongation', 'Suicidal thoughts', 'Increased bleeding'],
     answer: 2,
-    explanation: 'The Zoloft boxed warning: antidepressants increased the risk of suicidal thoughts and behaviors in pediatric and young adult patients.',
-    source: card('sertraline'),
+    explanation: 'The sertraline boxed warning: antidepressants increased the risk of suicidal thoughts and behaviors in pediatric and young adult patients.',
+    source: byGeneric('sertraline'),
   },
   {
     id: 'med-027',
@@ -302,14 +307,14 @@ export const starterQuestions: readonly Question[] = [
     stem: 'The zolpidem label warns about all of these. Which one is its boxed warning?',
     choices: ['Next-day drowsiness', 'Complex sleep behaviors', 'Dependence and withdrawal', 'Use with opioids'],
     answer: 1,
-    explanation: 'The Ambien boxed warning: complex sleep behaviors, including sleep-walking and sleep-driving, may occur and may result in serious injuries, including death.',
-    source: card('zolpidem'),
+    explanation: 'The zolpidem boxed warning: complex sleep behaviors, including sleep-walking and sleep-driving, may occur and may result in serious injuries, including death.',
+    source: byGeneric('zolpidem'),
   },
   {
     id: 'med-028',
     domain: 'medications',
     stem: 'The boxed warning on Celebrex (celecoxib), as on other NSAIDs, is about which risks?',
-    choices: ['Serious skin reactions', 'Liver injury and kidney failure', 'Asthma attacks and anaphylaxis', 'Heart attack, stroke and GI bleeding'],
+    choices: ['Serious skin reactions and blood disorders', 'Liver injury and kidney failure', 'Asthma attacks and anaphylaxis', 'Heart attack, stroke and GI bleeding'],
     answer: 3,
     explanation: 'The Celebrex boxed warning: NSAIDs increase the risk of serious cardiovascular thrombotic events, and of serious gastrointestinal bleeding, ulceration and perforation.',
     source: card('celecoxib'),
@@ -350,7 +355,7 @@ export const starterQuestions: readonly Question[] = [
     id: 'med-032',
     domain: 'medications',
     stem: 'According to its label, how should Nitrostat (nitroglycerin) sublingual tablets be kept?',
-    choices: ['In an amber plastic prescription vial', 'In a small metal pocket pill case', 'In the refrigerator, in its carton', 'In its original glass bottle, tightly capped'],
+    choices: ['In an amber plastic vial with a child-resistant cap', 'In a small metal pocket pill case', 'In the refrigerator, in its original carton', 'In its original glass bottle, tightly capped'],
     answer: 3,
     explanation: 'The Nitrostat label: the tablets should be kept in the original glass container and must be tightly capped after each use, at controlled room temperature.',
     source: label('Nitrostat (nitroglycerin sublingual tablets)', '9a52da75-d0af-4237-96c0-0b12adfa8636'),
@@ -407,7 +412,7 @@ export const starterQuestions: readonly Question[] = [
     id: 'fed-006',
     domain: 'federal',
     stem: 'Under federal rules, which of these must appear on every prescription for a controlled substance?',
-    choices: ["The prescriber's state license number", "The patient's date of birth", "The prescriber's NPI number", "The prescriber's DEA registration number"],
+    choices: ["The prescriber's state license number", "The patient's date of birth", 'The diagnosis the drug is being prescribed for', "The prescriber's DEA registration number"],
     answer: 3,
     explanation: "21 CFR 1306.05(a): it must bear the patient's full name and address, the drug name, strength, dosage form, quantity, directions, and the practitioner's name, address and registration number.",
     source: part1306,
@@ -486,9 +491,9 @@ export const starterQuestions: readonly Question[] = [
     domain: 'federal',
     stem: 'Under EPA rules, what may a pharmacy not do with hazardous waste pharmaceuticals?',
     choices: [
-      'Send potentially creditable ones to a reverse distributor',
+      'Send potentially creditable ones to a reverse distributor for credit',
       'Flush them into a sewer system that leads to a public treatment works',
-      'Keep them apart from other waste',
+      'Keep them in a container apart from their non-hazardous waste',
       'Label their container "Hazardous Waste Pharmaceuticals"',
     ],
     answer: 1,
@@ -796,16 +801,16 @@ export const starterQuestions: readonly Question[] = [
     stem: 'What does the first segment of a National Drug Code (NDC) identify?',
     choices: ['The package size', 'The strength and dosage form', 'The labeler', 'The manufacturing lot'],
     answer: 2,
-    explanation: 'The first segment is the labeler code, assigned by the FDA. The second is the product code and the third is the package code.',
+    explanation: 'FDA: the first segment, the labeler code, is assigned by the FDA. The firm assigns the other two.',
     source: ndc,
   },
   {
     id: 'ord-002',
     domain: 'orderEntry',
     stem: 'Two bottles hold the same drug, strength and dosage form from the same company: one has 30 tablets and one has 100. Which NDC segment is different?',
-    choices: ['The first (labeler code)', 'The second (product code)', 'All three', 'The third (package code)'],
+    choices: ['The first segment', 'The second segment', 'All three segments', 'The third segment'],
     answer: 3,
-    explanation: 'The package code identifies package sizes and types. The labeler and the product (strength, dosage form and formulation) are the same, so the first two segments match.',
+    explanation: 'FDA: the package code, the third segment, identifies package sizes and types. The firm, strength, dosage form and formulation are the same, so the other two segments match.',
     source: ndc,
   },
   {
@@ -820,10 +825,10 @@ export const starterQuestions: readonly Question[] = [
   {
     id: 'ord-004',
     domain: 'orderEntry',
-    stem: 'A dose of a liquid medicine is 10 mL. How many teaspoons is that?',
-    choices: ['2 teaspoons', '1 teaspoon', '3 teaspoons', '5 teaspoons'],
+    stem: 'A dose of a liquid medicine is 7.5 mL. How many teaspoons is that?',
+    choices: ['1.5 teaspoons', '1 teaspoon', '2 teaspoons', '2.5 teaspoons'],
     answer: 0,
-    explanation: '1 teaspoon is 5 mL, so 10 mL is 2 teaspoons.',
+    explanation: '1 teaspoon is 5 mL, so 7.5 mL is 1.5 teaspoons.',
     source: household,
   },
   {
@@ -925,7 +930,7 @@ export const starterQuestions: readonly Question[] = [
     stem: 'What can be found from the lot number on a drug product?',
     choices: [
       'The labeler, the product and the package size of the drug',
-      'The date after which that batch should not be used',
+      'The price the wholesaler charged for that batch',
       'The one package it is, apart from the others in its batch',
       'The record of how that batch was made and distributed',
     ],

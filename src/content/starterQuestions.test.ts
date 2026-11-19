@@ -1,4 +1,5 @@
 import { allocateQuestions, domains, mockExam } from './domains';
+import { drugCards } from './drugCards';
 import { starterQuestions } from './starterQuestions';
 
 // Rule 7: the sites whose own pages were read to confirm each answer.
@@ -44,5 +45,30 @@ test('the right answer is not always in the same place', () => {
   for (const d of domains) {
     const places = new Set(starterQuestions.filter((q) => q.domain === d.id).map((q) => q.answer));
     expect(places.size).toBeGreaterThanOrEqual(3);
+  }
+});
+
+test.each(starterQuestions.map((q) => [q.id, q] as const))('%s does not make its answer the longest choice by a clear margin', (_, q) => {
+  const wrong = q.choices.filter((_, i) => i !== q.answer).map((c) => c.length);
+  expect(q.choices[q.answer].length).toBeLessThanOrEqual(Math.max(...wrong) + 2);
+});
+
+// A question asking a brand or generic name must not be answered by another question's text or source.
+test('no question pairs the brand and generic that a name question asks for', () => {
+  const nameQuestions = starterQuestions.flatMap((q) => {
+    const asked = /(?:generic|brand) name of (\w+)/.exec(q.stem)?.[1].toLowerCase();
+    const drug = drugCards.find((c) => c.brand.toLowerCase() === asked || c.generic.split(' ')[0].toLowerCase() === asked);
+    return drug === undefined ? [] : [{ id: q.id, brand: drug.brand.toLowerCase(), generic: drug.generic.split(' ')[0].toLowerCase() }];
+  });
+  expect(nameQuestions.length).toBeGreaterThanOrEqual(7);
+  for (const asked of nameQuestions) {
+    const pairing = starterQuestions
+      .filter((q) => q.id !== asked.id)
+      .filter((q) => {
+        const text = [q.stem, ...q.choices, q.explanation, q.source.title].join(' ').toLowerCase();
+        return text.includes(asked.brand) && text.includes(asked.generic);
+      })
+      .map((q) => q.id);
+    expect({ asked: asked.id, pairing }).toEqual({ asked: asked.id, pairing: [] });
   }
 });
