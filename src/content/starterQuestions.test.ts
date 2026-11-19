@@ -4,9 +4,12 @@ import { starterQuestions } from './starterQuestions';
 // Rule 7: the sites whose own pages were read to confirm each answer.
 const PRIMARY = ['www.ecfr.gov', 'dailymed.nlm.nih.gov', 'www.fda.gov', 'www.cdc.gov', 'www.osha.gov', 'www.nist.gov'];
 
-test('there are six questions for each exam domain', () => {
-  for (const d of domains) expect(starterQuestions.filter((q) => q.domain === d.id)).toHaveLength(6);
-  expect(starterQuestions).toHaveLength(6 * domains.length);
+// Grows toward the mock exam's 32, 17, 21 and 20 as each domain's questions are written.
+const COUNTS = { medications: 6, federal: 17, safety: 6, orderEntry: 6 } as const;
+
+test('each exam domain has the number of questions written for it so far', () => {
+  for (const d of domains) expect(starterQuestions.filter((q) => q.domain === d.id)).toHaveLength(COUNTS[d.id]);
+  expect(starterQuestions).toHaveLength(Object.values(COUNTS).reduce((sum, n) => sum + n, 0));
 });
 
 test('every question has its own id and stem', () => {
