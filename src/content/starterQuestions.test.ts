@@ -4,6 +4,9 @@ import { starterQuestions } from './starterQuestions';
 
 // Rule 7: the sites whose own pages were read to confirm each answer.
 const PRIMARY = ['www.ecfr.gov', 'dailymed.nlm.nih.gov', 'www.fda.gov', 'www.cdc.gov', 'www.osha.gov', 'www.nist.gov'];
+// MedlinePlus and the ISMP error-prone list: allowed for a sig code's meaning and nothing else.
+const ABBREVIATION_ONLY = ['medlineplus.gov', 'online.ecri.org'];
+const SIG_CODE = /\b(PRN|BID|TID|QID|QHS|QD|QOD|UD|OD|OS|OU|AD|AS|AU)\b/;
 
 // Written so far; each rises to its share of the mock exam as that domain's questions are added.
 const COUNTS = { medications: 32, federal: 17, safety: 21, orderEntry: 20 } as const;
@@ -37,8 +40,14 @@ test.each(starterQuestions.map((q) => [q.id, q] as const))('%s has four differen
 test.each(starterQuestions.map((q) => [q.id, q] as const))('%s stores a source on a primary site', (_, q) => {
   const url = new URL(q.source.url);
   expect(url.protocol).toBe('https:');
-  expect(PRIMARY).toContain(url.hostname);
+  expect([...PRIMARY, ...ABBREVIATION_ONLY]).toContain(url.hostname);
   expect(q.source.title.trim().length).toBeGreaterThan(5);
+});
+
+test('an abbreviation source is cited only by a question about a sig code', () => {
+  const citing = starterQuestions.filter((q) => ABBREVIATION_ONLY.includes(new URL(q.source.url).hostname));
+  expect(citing.length).toBeGreaterThanOrEqual(5);
+  expect(citing.filter((q) => q.domain !== 'orderEntry' || !SIG_CODE.test(q.stem)).map((q) => q.id)).toEqual([]);
 });
 
 test('the right answer is not always in the same place', () => {

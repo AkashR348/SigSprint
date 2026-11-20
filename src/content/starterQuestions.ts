@@ -55,6 +55,12 @@ const household: Source = {
   url: 'https://www.fda.gov/regulatory-information/search-fda-guidance-documents/guidance-industry-guidelines-determining-metric-equivalents-household-measures',
 };
 const prefixes: Source = { title: 'NIST, Metric (SI) Prefixes', url: 'https://www.nist.gov/pml/owm/metric-si-prefixes' };
+// Abbreviations only: neither is used for a drug or legal fact.
+const abbreviations: Source = { title: 'MedlinePlus, Appendix B: Some Common Abbreviations', url: 'https://medlineplus.gov/appendixb.html' };
+const errorProne: Source = {
+  title: 'ISMP, List of Error-Prone Abbreviations, Symbols, and Dose Designations',
+  url: 'https://online.ecri.org/hubfs/ISMP/Resources/ISMP_ErrorProneAbbreviation_List.pdf',
+};
 
 export const starterQuestions: readonly Question[] = [
   {
@@ -805,15 +811,6 @@ export const starterQuestions: readonly Question[] = [
     source: ndc,
   },
   {
-    id: 'ord-002',
-    domain: 'orderEntry',
-    stem: 'Two bottles hold the same drug, strength and dosage form from the same company: one has 30 tablets and one has 100. Which NDC segment is different?',
-    choices: ['The first segment', 'The second segment', 'All three segments', 'The third segment'],
-    answer: 3,
-    explanation: 'FDA: the package code, the third segment, identifies package sizes and types. The firm, strength, dosage form and formulation are the same, so the other two segments match.',
-    source: ndc,
-  },
-  {
     id: 'ord-003',
     domain: 'orderEntry',
     stem: 'A prescription is for amoxicillin 500 mg per dose. The pharmacy has amoxicillin suspension 250 mg/5 mL. How many mL is one dose?',
@@ -862,15 +859,6 @@ export const starterQuestions: readonly Question[] = [
     source: metformin,
   },
   {
-    id: 'ord-008',
-    domain: 'orderEntry',
-    stem: 'A prescription is for 4 fluid ounces of a liquid medicine. Using 1 fluid ounce = 30 mL, how many mL is that?',
-    choices: ['120 mL', '60 mL', '240 mL', '40 mL'],
-    answer: 0,
-    explanation: '4 × 30 mL = 120 mL. The FDA guideline gives 1 fluid ounce as 30 mL.',
-    source: household,
-  },
-  {
     id: 'ord-009',
     domain: 'orderEntry',
     stem: 'The directions are 1 tablespoon twice a day for 10 days. How many mL are needed in all?',
@@ -889,30 +877,12 @@ export const starterQuestions: readonly Question[] = [
     source: hydrocortisone,
   },
   {
-    id: 'ord-011',
-    domain: 'orderEntry',
-    stem: 'A patient uses one vial of albuterol inhalation solution (2.5 mg/3 mL) four times a day. How many vials are needed for 30 days?',
-    choices: ['30 vials', '60 vials', '90 vials', '120 vials'],
-    answer: 3,
-    explanation: '4 vials a day × 30 days = 120 vials. The label gives the usual dose as one vial three to four times daily.',
-    source: albuterolNeb,
-  },
-  {
     id: 'ord-012',
     domain: 'orderEntry',
     stem: 'A prescription is written for levothyroxine 0.05 mg. The tablets are labeled in micrograms (mcg). Which strength is that?',
     choices: ['50 mcg', '5 mcg', '500 mcg', '0.5 mcg'],
     answer: 0,
     explanation: 'A milligram is a thousandth of a gram and a microgram is a millionth, so 1 mg is 1,000 mcg. 0.05 × 1,000 = 50 mcg.',
-    source: prefixes,
-  },
-  {
-    id: 'ord-013',
-    domain: 'orderEntry',
-    stem: 'A 150 mL bottle of amoxicillin suspension is 250 mg/5 mL. How many grams of amoxicillin are in the full bottle?',
-    choices: ['0.75 g', '7.5 g', '75 g', '3.75 g'],
-    answer: 1,
-    explanation: '150 mL ÷ 5 mL = 30 doses of 250 mg, which is 7,500 mg. A milligram is a thousandth of a gram, so that is 7.5 g.',
     source: prefixes,
   },
   {
@@ -948,15 +918,6 @@ export const starterQuestions: readonly Question[] = [
     choices: ['A U-100 insulin syringe', 'A tuberculin syringe', 'A U-500 insulin syringe', 'Any insulin syringe'],
     answer: 0,
     explanation: 'The label gives the strength as 100 units/mL (U-100), and the carton says to use it only with a U-100 syringe. A syringe marked for another strength gives the wrong dose.',
-    source: humulin,
-  },
-  {
-    id: 'ord-017',
-    domain: 'orderEntry',
-    stem: 'According to its label, an opened vial of Humulin R U-100 should be thrown away after how many days, even if insulin is left in it?',
-    choices: ['28 days', '31 days', '14 days', '42 days'],
-    answer: 1,
-    explanation: 'The label says to throw away all opened vials after 31 days, even if there is still insulin left in the vial.',
     source: humulin,
   },
   {
@@ -1001,5 +962,50 @@ export const starterQuestions: readonly Question[] = [
       title: '21 CFR 1317.15, Reverse distributor registration requirements and authorized activities (DEA)',
       url: 'https://www.ecfr.gov/current/title-21/chapter-II/part-1317/subpart-A/section-1317.15',
     },
+  },
+  {
+    id: 'ord-021',
+    domain: 'orderEntry',
+    stem: 'A prescription reads: take 1 tablet every 6 hours PRN. What does PRN mean?',
+    choices: ['At bedtime', 'Before meals', 'As needed', 'At once'],
+    answer: 2,
+    explanation: 'MedlinePlus: PRN stands for "as needed". The patient takes a dose only when it is needed, not on a fixed schedule.',
+    source: abbreviations,
+  },
+  {
+    id: 'ord-022',
+    domain: 'orderEntry',
+    stem: 'A prescription reads: take 1 capsule TID for 10 days. How many capsules should be dispensed?',
+    choices: ['20 capsules', '30 capsules', '40 capsules', '10 capsules'],
+    answer: 1,
+    explanation: 'MedlinePlus: TID stands for three times a day. 3 capsules a day × 10 days = 30 capsules.',
+    source: abbreviations,
+  },
+  {
+    id: 'ord-023',
+    domain: 'orderEntry',
+    stem: 'A prescription reads: take 1 tablet QID, quantity 60. How many days will it last?',
+    choices: ['15 days', '20 days', '30 days', '60 days'],
+    answer: 0,
+    explanation: 'MedlinePlus: QID stands for four times a day. That is 4 tablets a day, and 60 ÷ 4 = 15 days.',
+    source: abbreviations,
+  },
+  {
+    id: 'ord-024',
+    domain: 'orderEntry',
+    stem: 'A prescription for drops reads: instill 1 drop OS twice a day. Where do the drops go?',
+    choices: ['In the right eye', 'In each eye', 'In the left ear', 'In the left eye'],
+    answer: 3,
+    explanation: 'ISMP: OD, OS and OU are meant as right eye, left eye and each eye. They are mistaken for the ear codes AD, AS and AU, so ISMP says to write out "left eye".',
+    source: errorProne,
+  },
+  {
+    id: 'ord-025',
+    domain: 'orderEntry',
+    stem: 'A prescription reads: take 1 tablet QHS. What does QHS mean?',
+    choices: ['Every hour', 'Nightly at bedtime', 'Every other day', 'Four times a day'],
+    answer: 1,
+    explanation: 'ISMP: QHS is meant as nightly at bedtime. Written by hand, it has been misread as "qhr" (every hour).',
+    source: errorProne,
   },
 ];
