@@ -63,8 +63,8 @@ export function shapeLine(length: ExamLength): string {
   return `${questions} questions in ${minutes} minutes, weighted like the real exam.`;
 }
 
-/** The rules the setup screen states before an exam starts. */
-export function examRules(mode: ExamMode, length: ExamLength): string[] {
+/** The rules the setup screen states before an exam starts; `pool` is how many questions it draws from. */
+export function examRules(mode: ExamMode, length: ExamLength, pool: number): string[] {
   const clock =
     mode === 'exam'
       ? 'The clock never stops, even if you leave the app. There is no pause.'
@@ -75,9 +75,7 @@ export function examRules(mode: ExamMode, length: ExamLength): string[] {
     'When time runs out the exam ends, and unanswered questions count as wrong. You get a warning with 10 minutes left.',
     'Skip, flag and change answers as you like. Right and wrong answers show only after you submit.',
     `${pointsRule} Not answered takes none. Points are added when you submit. An exam you quit earns nothing.`,
-    length === 'full'
-      ? 'Until the question bank is ready, every full exam has the same 90 questions in a new order.'
-      : 'Until the question bank is ready, each half exam draws its 45 questions from the same 90.',
+    `Until the question bank is ready, each exam draws its ${examShapes[length].questions} questions from the same ${pool}.`,
   ];
 }
 

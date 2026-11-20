@@ -45,7 +45,7 @@ const perDomain = (questions: readonly Question[]) => {
   return out;
 };
 
-test('a full exam is every one of the 90 questions once, 110 minutes on a strict clock', () => {
+test('a full exam is 90 different questions, 110 minutes on a strict clock', () => {
   const exam = full();
   expect(exam.ids).toHaveLength(90);
   expect(new Set(exam.ids).size).toBe(90);
