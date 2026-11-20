@@ -16,8 +16,8 @@ wording in `src/lib/mockText.ts`, and the saved shape in `src/lib/mockSave.ts`.
   unanswered questions count as wrong.
 - Questions can be skipped, flagged and changed. Nothing is marked right or wrong until the exam
   is submitted. Submitting with blanks asks once.
-- Until the question bank exists, a full exam is the same 90 questions with the questions and each
-  question's choices in a new order.
+- Until the question bank exists, every exam is drawn by exam weight from the starter questions,
+  with the questions and each question's choices in a new order. The setup screen says how many.
 
 ## What is saved, and when
 
