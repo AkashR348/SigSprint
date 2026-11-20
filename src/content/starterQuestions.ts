@@ -1005,7 +1005,7 @@ export const starterQuestions: readonly Question[] = [
     stem: 'A prescription reads: take 1 tablet QHS. What does QHS mean?',
     choices: ['Every hour', 'Nightly at bedtime', 'Every other day', 'Four times a day'],
     answer: 1,
-    explanation: 'ISMP: QHS is meant as nightly at bedtime. It has been misread as "qhr" (every hour), so ISMP says to write out "nightly" or "at bedtime".',
+    explanation: 'ISMP: QHS is meant as nightly at bedtime. Written by hand, it has been misread as "qhr" (every hour).',
     source: errorProne,
   },
 ];
