@@ -51,6 +51,11 @@ this SDK; read it before touching an Expo or React Native API.
    phone; `progressStore.test.ts` asserts each. The screen asks before calling it, and waits while
    it runs; `SaveNotice.test.tsx` asserts that. Recovering a backup and the flashcard schedule are in
    `docs/saved-progress.md`.
+10. **A mock exam is saved as it goes and counted once.** Every answer is written to saved
+    progress as it is tapped; points, the daily count and the result row are added in one write
+    when it ends, and a quit exam counts nothing. Its score estimate is always labelled an
+    estimate, never a PTCB score. `mockExam.test.ts` and `MockExamRunner.test.tsx` assert each;
+    the rest is in `docs/mock-exam.md`.
 
 ## Layout
 

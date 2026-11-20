@@ -1,3 +1,5 @@
+import { parseExamRecords, parseSavedExam, type ExamRecord, type SavedExam } from './mockSave';
+
 // What the phone remembers. `days` maps a local date (YYYY-MM-DD) to the answers and cards counted that day.
 // `handledBackups` lists backups already recovered or set aside, so none is offered or counted twice.
 // `cards` holds each flashcard's review schedule by card id; a card not in it has never been rated.
@@ -11,6 +13,9 @@ export type Progress = {
   days: Record<string, number>;
   handledBackups?: string[];
   cards?: Record<string, CardState>;
+  // The mock exam in progress, and the last finished ones, newest first.
+  exam?: SavedExam;
+  exams?: ExamRecord[];
 };
 
 export const DEFAULT_DAILY_GOAL = 20;
@@ -58,6 +63,16 @@ export function parseProgress(value: unknown): Progress | null {
     }
     // fromEntries makes every id an own key, a "__proto__" one included.
     progress.cards = Object.fromEntries(cards);
+  }
+  if (v.exam !== undefined) {
+    const exam = parseSavedExam(v.exam);
+    if (exam === null) return null;
+    progress.exam = exam;
+  }
+  if (v.exams !== undefined) {
+    const exams = parseExamRecords(v.exams);
+    if (exams === null) return null;
+    progress.exams = exams;
   }
   return progress;
 }

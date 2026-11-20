@@ -87,7 +87,7 @@ export default function HomeScreen() {
           <ModeTile title="Flashcards" detail={flashcardsTile} icon="albums" iconColor={colors.amber} onPress={() => router.push('/flashcards/setup')} />
         </View>
         <View style={styles.row}>
-          <ModeTile title="Mock exam" detail={`${mockExam.questions} questions, timed`} icon="timer" iconColor={colors.blue} onPress={() => router.push('/study')} />
+          <ModeTile title="Mock exam" detail={`${mockExam.questions} questions, timed`} icon="timer" iconColor={colors.blue} onPress={() => router.push('/mock/setup')} />
           <ModeTile title="Games" detail="Match · Speed round" icon="game-controller" iconColor={colors.pink} onPress={() => router.push('/games')} />
         </View>
 
