@@ -54,6 +54,18 @@ test('a full exam is 90 different questions, 110 minutes on a strict clock', () 
   expect(perDomain(resolveExam(exam, starterQuestions)!)).toEqual({ medications: 32, federal: 17, safety: 21, orderEntry: 20 });
 });
 
+test('full exams leave out different Order Entry questions when the pool has more than 90', () => {
+  const left = (seed: number) => {
+    const ids = new Set(drawExam(starterQuestions, 'exam', 'full', NOW, seeded(seed))!.ids);
+    return starterQuestions.filter((q) => !ids.has(q.id));
+  };
+  const a = left(1);
+  const b = left(2);
+  expect(a).toHaveLength(starterQuestions.length - 90);
+  expect(a.every((q) => q.domain === 'orderEntry')).toBe(true);
+  expect(a.map((q) => q.id)).not.toEqual(b.map((q) => q.id));
+});
+
 test('a half exam draws 16, 8, 11 and 10 at random, with 55 minutes left on a relaxed clock', () => {
   const a = drawExam(starterQuestions, 'relaxed', 'half', NOW, seeded(1))!;
   const b = drawExam(starterQuestions, 'relaxed', 'half', NOW, seeded(2))!;

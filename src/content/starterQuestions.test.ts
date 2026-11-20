@@ -8,7 +8,7 @@ const PRIMARY = ['www.ecfr.gov', 'dailymed.nlm.nih.gov', 'www.fda.gov', 'www.cdc
 const ABBREVIATION_ONLY = ['medlineplus.gov', 'online.ecri.org'];
 const SIG_CODE = /\b(PRN|BID|TID|QID|QHS|QD|QOD|UD|OD|OS|OU|AD|AS|AU)\b/;
 
-// Written so far; each rises to its share of the mock exam as that domain's questions are added.
+// Written so far. A full exam takes 32, 17, 21 and 20, so Order Entry's extra three vary between exams.
 const COUNTS = { medications: 32, federal: 17, safety: 21, orderEntry: 23 } as const;
 
 test('each exam domain has the number of questions written for it so far', () => {

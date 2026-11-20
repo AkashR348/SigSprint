@@ -1014,7 +1014,7 @@ export const starterQuestions: readonly Question[] = [
     stem: 'A prescription reads: take 1 tablet QOD, quantity 15. How many days will it last?',
     choices: ['15 days', '45 days', '30 days', '60 days'],
     answer: 2,
-    explanation: 'ISMP: QOD is meant as every other day. One tablet every 2 days makes 15 tablets last 30 days. ISMP says to write out "every other day", because QOD is misread.',
+    explanation: 'ISMP: QOD is meant as every other day. One tablet every 2 days makes 15 tablets last 30 days. QOD is misread as daily or four times a day, so ISMP says to write out "every other day".',
     source: errorProne,
   },
   {
