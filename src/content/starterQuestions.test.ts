@@ -4,12 +4,15 @@ import { starterQuestions } from './starterQuestions';
 
 // Rule 7: the sites whose own pages were read to confirm each answer.
 const PRIMARY = ['www.ecfr.gov', 'dailymed.nlm.nih.gov', 'www.fda.gov', 'www.cdc.gov', 'www.osha.gov', 'www.nist.gov'];
-// MedlinePlus and the ISMP error-prone list: allowed for a sig code's meaning and nothing else.
-const ABBREVIATION_ONLY = ['medlineplus.gov', 'online.ecri.org'];
-const SIG_CODE = /\b(PRN|BID|TID|QID|QHS|QD|QOD|UD|OD|OS|OU|AD|AS|AU)\b/;
+// MedlinePlus: a code's meaning only. The ISMP error-prone list: that, and how a dose is written.
+const MEDLINEPLUS = 'medlineplus.gov';
+const ISMP = 'online.ecri.org';
+const SIG_CODE = /\b(PRN|BID|TID|QID|QHS|QD|QOD|UD|OD|OS|OU|AD|AS|AU|IM|IV|SC|SQ)\b/;
+// The Patient Safety questions on how a dose is written; a new one is added here on purpose.
+const DOSE_WRITING = ['saf-022'];
 
-// Written so far. A full exam takes 32, 17, 21 and 20, so Order Entry's extra three vary between exams.
-const COUNTS = { medications: 32, federal: 17, safety: 21, orderEntry: 23 } as const;
+// Written so far. A full exam takes 32, 17, 21 and 20, so the extras in Safety and Order Entry vary between exams.
+const COUNTS = { medications: 32, federal: 17, safety: 22, orderEntry: 25 } as const;
 
 test('each exam domain has the number of questions written for it so far', () => {
   for (const d of domains) expect(starterQuestions.filter((q) => q.domain === d.id)).toHaveLength(COUNTS[d.id]);
@@ -40,14 +43,17 @@ test.each(starterQuestions.map((q) => [q.id, q] as const))('%s has four differen
 test.each(starterQuestions.map((q) => [q.id, q] as const))('%s stores a source on a primary site', (_, q) => {
   const url = new URL(q.source.url);
   expect(url.protocol).toBe('https:');
-  expect([...PRIMARY, ...ABBREVIATION_ONLY]).toContain(url.hostname);
+  expect([...PRIMARY, MEDLINEPLUS, ISMP]).toContain(url.hostname);
   expect(q.source.title.trim().length).toBeGreaterThan(5);
 });
 
-test('an abbreviation source is cited only by a question about a sig code', () => {
-  const citing = starterQuestions.filter((q) => ABBREVIATION_ONLY.includes(new URL(q.source.url).hostname));
-  expect(citing.length).toBeGreaterThanOrEqual(9);
-  expect(citing.filter((q) => q.domain !== 'orderEntry' || !SIG_CODE.test(q.stem)).map((q) => q.id)).toEqual([]);
+test('MedlinePlus and ISMP are cited only for a sig code, and ISMP also for how a dose is written', () => {
+  const citing = (host: string) => starterQuestions.filter((q) => new URL(q.source.url).hostname === host);
+  const sigCode = (q: (typeof starterQuestions)[number]) => q.domain === 'orderEntry' && SIG_CODE.test(q.stem);
+  expect(citing(MEDLINEPLUS).length + citing(ISMP).length).toBeGreaterThanOrEqual(12);
+  expect(citing(MEDLINEPLUS).filter((q) => !sigCode(q)).map((q) => q.id)).toEqual([]);
+  expect(citing(ISMP).filter((q) => !sigCode(q)).map((q) => q.id)).toEqual(DOSE_WRITING);
+  expect(citing(ISMP).filter((q) => DOSE_WRITING.includes(q.id)).map((q) => q.domain)).toEqual(DOSE_WRITING.map(() => 'safety'));
 });
 
 test('the right answer is not always in the same place', () => {

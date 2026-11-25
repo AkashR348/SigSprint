@@ -55,7 +55,7 @@ const household: Source = {
   url: 'https://www.fda.gov/regulatory-information/search-fda-guidance-documents/guidance-industry-guidelines-determining-metric-equivalents-household-measures',
 };
 const prefixes: Source = { title: 'NIST, Metric (SI) Prefixes', url: 'https://www.nist.gov/pml/owm/metric-si-prefixes' };
-// Abbreviations only: neither is used for a drug or legal fact.
+// MedlinePlus: a code's meaning only. ISMP: that, and how a dose is written. Never a drug or legal fact.
 const abbreviations: Source = { title: 'MedlinePlus, Appendix B: Some Common Abbreviations', url: 'https://medlineplus.gov/appendixb.html' };
 const errorProne: Source = {
   title: 'ISMP, List of Error-Prone Abbreviations, Symbols, and Dose Designations',
@@ -802,6 +802,15 @@ export const starterQuestions: readonly Question[] = [
     },
   },
   {
+    id: 'saf-022',
+    domain: 'safety',
+    stem: 'An insulin order is written "4U". According to ISMP, what dose can that be mistaken for?',
+    choices: ['0.4 units', '14 units', '40 units', '400 units'],
+    answer: 2,
+    explanation: 'ISMP: U has been mistaken as zero, so 4U is seen as 40, a 10-fold overdose. ISMP says: "Use unit(s)".',
+    source: errorProne,
+  },
+  {
     id: 'ord-001',
     domain: 'orderEntry',
     stem: 'What does the first segment of a National Drug Code (NDC) identify?',
@@ -1033,6 +1042,24 @@ export const starterQuestions: readonly Question[] = [
     choices: ['Four times a day', 'Every other day', 'Every night', 'Every day'],
     answer: 3,
     explanation: 'ISMP: QD is meant as every day. It has been misread as four times a day, so ISMP says to write out "daily".',
+    source: errorProne,
+  },
+  {
+    id: 'ord-029',
+    domain: 'orderEntry',
+    stem: 'A vaccine order reads: give 0.5 mL IM. What does IM stand for?',
+    choices: ['Intravenous', 'Intramuscular', 'Intranasal', 'Intradermal'],
+    answer: 1,
+    explanation: 'MedlinePlus: IM stands for intramuscular, a type of injection.',
+    source: abbreviations,
+  },
+  {
+    id: 'ord-030',
+    domain: 'orderEntry',
+    stem: 'A prescription reads: 0.5 mL SC once a week. What does SC mean?',
+    choices: ['Subcutaneous', 'Sublingual', 'Intramuscular', 'Intradermal'],
+    answer: 0,
+    explanation: 'ISMP: SC, SQ, sq or sub q is meant as subcutaneous(ly). SC has been mistaken as SL (sublingual), so ISMP says to use SUBQ or subcutaneous(ly).',
     source: errorProne,
   },
 ];
