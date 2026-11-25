@@ -46,19 +46,19 @@ test('the estimate is always called an estimate and set against 1,400', () => {
 });
 
 test('the rules state the shape, the clock for the mode, the points and the repeats', () => {
-  const strict = examRules('exam', 'full').join(' ');
+  const strict = examRules('exam', 'full', 93).join(' ');
   expect(strict).toContain('90 questions in 110 minutes');
   expect(strict).toContain('The clock never stops, even if you leave the app. There is no pause.');
   expect(strict).toContain('unanswered questions count as wrong');
   expect(strict).toContain('10 minutes left');
   expect(strict).toContain('Correct adds 10 points. Wrong takes 5. Not answered takes none.');
   expect(strict).toContain('An exam you quit earns nothing.');
-  expect(strict).toContain('every full exam has the same 90 questions in a new order');
-  const relaxed = examRules('relaxed', 'half').join(' ');
+  expect(strict).toContain('each exam draws its 90 questions from the same 93.');
+  const relaxed = examRules('relaxed', 'half', 93).join(' ');
   expect(relaxed).toContain('45 questions in 55 minutes');
   expect(relaxed).toContain('You can pause, which hides the question. The clock also stops while the app is closed.');
   expect(relaxed).toContain('When time runs out the exam ends');
-  expect(relaxed).toContain('draws its 45 questions from the same 90');
+  expect(relaxed).toContain('each exam draws its 45 questions from the same 93.');
 });
 
 test('a history row is labelled with its date, mode and length, and carries the estimate', () => {

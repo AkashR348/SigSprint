@@ -132,7 +132,7 @@ export default function MockSetupScreen() {
             />
             <View style={styles.group}>
               <Text accessibilityRole="header" style={styles.label}>RULES</Text>
-              {examRules(mode, length).map((rule) => (
+              {examRules(mode, length, starterQuestions.length).map((rule) => (
                 <View key={rule} style={styles.rule}>
                   <Text accessibilityElementsHidden importantForAccessibility="no" style={styles.dot}>•</Text>
                   <Text style={styles.ruleText}>{rule}</Text>

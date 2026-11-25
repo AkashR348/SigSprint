@@ -8,8 +8,8 @@ const PRIMARY = ['www.ecfr.gov', 'dailymed.nlm.nih.gov', 'www.fda.gov', 'www.cdc
 const ABBREVIATION_ONLY = ['medlineplus.gov', 'online.ecri.org'];
 const SIG_CODE = /\b(PRN|BID|TID|QID|QHS|QD|QOD|UD|OD|OS|OU|AD|AS|AU)\b/;
 
-// Written so far; each rises to its share of the mock exam as that domain's questions are added.
-const COUNTS = { medications: 32, federal: 17, safety: 21, orderEntry: 20 } as const;
+// Written so far. A full exam takes 32, 17, 21 and 20, so Order Entry's extra three vary between exams.
+const COUNTS = { medications: 32, federal: 17, safety: 21, orderEntry: 23 } as const;
 
 test('each exam domain has the number of questions written for it so far', () => {
   for (const d of domains) expect(starterQuestions.filter((q) => q.domain === d.id)).toHaveLength(COUNTS[d.id]);
@@ -46,7 +46,7 @@ test.each(starterQuestions.map((q) => [q.id, q] as const))('%s stores a source o
 
 test('an abbreviation source is cited only by a question about a sig code', () => {
   const citing = starterQuestions.filter((q) => ABBREVIATION_ONLY.includes(new URL(q.source.url).hostname));
-  expect(citing.length).toBeGreaterThanOrEqual(5);
+  expect(citing.length).toBeGreaterThanOrEqual(9);
   expect(citing.filter((q) => q.domain !== 'orderEntry' || !SIG_CODE.test(q.stem)).map((q) => q.id)).toEqual([]);
 });
 

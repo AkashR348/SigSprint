@@ -42,7 +42,7 @@ test('the setup screen states the rules for the mode and length chosen', async (
   await render(<MockSetupScreen />);
   expect(screen.getByText('90 questions in 110 minutes, weighted like the real exam.')).toBeTruthy();
   expect(screen.getByText('The clock never stops, even if you leave the app. There is no pause.')).toBeTruthy();
-  expect(screen.getByText(/every full exam has the same 90 questions in a new order/)).toBeTruthy();
+  expect(screen.getByText(`Until the question bank is ready, each exam draws its 90 questions from the same ${starterQuestions.length}.`)).toBeTruthy();
   await fireEvent.press(screen.getByRole('radio', { name: 'Mode, Relaxed' }));
   await fireEvent.press(screen.getByRole('radio', { name: 'Length, Half, 45 questions' }));
   expect(screen.getByText('45 questions in 55 minutes, weighted like the real exam.')).toBeTruthy();
