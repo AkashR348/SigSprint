@@ -8,7 +8,8 @@ const PRIMARY = ['www.ecfr.gov', 'dailymed.nlm.nih.gov', 'www.fda.gov', 'www.cdc
 const MEDLINEPLUS = 'medlineplus.gov';
 const ISMP = 'online.ecri.org';
 const SIG_CODE = /\b(PRN|BID|TID|QID|QHS|QD|QOD|UD|OD|OS|OU|AD|AS|AU|IM|IV|SC|SQ)\b/;
-const DOSE_WRITING = /\b(written|writing)\b.*\bISMP\b/;
+// The Patient Safety questions on how a dose is written; a new one is added here on purpose.
+const DOSE_WRITING = ['saf-022'];
 
 // Written so far. A full exam takes 32, 17, 21 and 20, so the extras in Safety and Order Entry vary between exams.
 const COUNTS = { medications: 32, federal: 17, safety: 22, orderEntry: 25 } as const;
@@ -51,7 +52,8 @@ test('MedlinePlus and ISMP are cited only for a sig code, and ISMP also for how 
   const sigCode = (q: (typeof starterQuestions)[number]) => q.domain === 'orderEntry' && SIG_CODE.test(q.stem);
   expect(citing(MEDLINEPLUS).length + citing(ISMP).length).toBeGreaterThanOrEqual(12);
   expect(citing(MEDLINEPLUS).filter((q) => !sigCode(q)).map((q) => q.id)).toEqual([]);
-  expect(citing(ISMP).filter((q) => !sigCode(q) && !(q.domain === 'safety' && DOSE_WRITING.test(q.stem))).map((q) => q.id)).toEqual([]);
+  expect(citing(ISMP).filter((q) => !sigCode(q)).map((q) => q.id)).toEqual(DOSE_WRITING);
+  expect(citing(ISMP).filter((q) => DOSE_WRITING.includes(q.id)).map((q) => q.domain)).toEqual(DOSE_WRITING.map(() => 'safety'));
 });
 
 test('the right answer is not always in the same place', () => {

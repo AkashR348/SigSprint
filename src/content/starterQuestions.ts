@@ -807,7 +807,7 @@ export const starterQuestions: readonly Question[] = [
     stem: 'An insulin order is written "4U". According to ISMP, what dose can that be mistaken for?',
     choices: ['0.4 units', '14 units', '40 units', '400 units'],
     answer: 2,
-    explanation: 'ISMP: U has been mistaken for a zero, so 4U is seen as 40, a 10-fold overdose. ISMP says to write "units".',
+    explanation: 'ISMP: U has been mistaken as zero, so 4U is seen as 40, a 10-fold overdose. ISMP says: "Use unit(s)".',
     source: errorProne,
   },
   {
@@ -1056,10 +1056,10 @@ export const starterQuestions: readonly Question[] = [
   {
     id: 'ord-030',
     domain: 'orderEntry',
-    stem: 'A prescription reads: inject 0.5 mL SC once a week. What does SC mean?',
+    stem: 'A prescription reads: 0.5 mL SC once a week. What does SC mean?',
     choices: ['Subcutaneous', 'Sublingual', 'Intramuscular', 'Intradermal'],
     answer: 0,
-    explanation: 'ISMP: SC, SQ and sub q are meant as subcutaneous(ly). SC has been mistaken for SL (sublingual), so ISMP says to use SUBQ or write out "subcutaneously".',
+    explanation: 'ISMP: SC, SQ, sq or sub q is meant as subcutaneous(ly). SC has been mistaken as SL (sublingual), so ISMP says to use SUBQ or subcutaneous(ly).',
     source: errorProne,
   },
 ];
